@@ -1,0 +1,18 @@
+﻿# Isolated runtime data, tokens, and history (CRITICAL: NEVER COMMIT CREDENTIALS)
+data/
+jetski-standalone-oauth-token
+*.token
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Large core binary (~193 MB Google proprietary CLI engine)
+bin/agy.exe
+bin/*.exe.old
+
+# OS / Editor artifacts
+.vs/
+.vscode/
+Thumbs.db
+Desktop.ini
