@@ -1,0 +1,85 @@
+﻿# Publish GitHub Release Script
+param(
+    [string]$Tag = "v1.0.0",
+    [string]$Title = "AGY-Portable v1.0.0 - Multi-Platform Portable Google Antigravity",
+    [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
+)
+
+$ErrorActionPreference = "Stop"
+
+if (-not (Test-Path $KeyFile)) {
+    Write-Error "GitHub token file not found at: $KeyFile"
+    exit 1
+}
+
+$token = (Get-Content -Path $KeyFile -Raw).Trim()
+$repo = "r0bledas/AGY-Portable"
+
+$headers = @{
+    "Authorization" = "token $token"
+    "User-Agent" = "PowerShell-Release-Publisher"
+    "Accept" = "application/vnd.github.v3+json"
+}
+
+Write-Host "Creating GitHub Release $Tag on $repo..." -ForegroundColor Cyan
+
+$releaseBody = @"
+## Google Antigravity (AGY) - Portable Edition $Tag
+
+A fully self-contained, USB-portable distribution of the Google Antigravity CLI (agy) for Windows, macOS, and Linux.
+
+### Release Assets Included
+- **AGY-Portable-v1.0.0-All-Platforms.zip**: Multi-platform USB distribution for Windows, macOS, and Linux.
+- **AGY-Portable-v1.0.0-Windows.zip**: Standalone Windows release (WinForms Hub + CLI wrappers).
+- **AGY-Portable-v1.0.0-macOS.zip**: Standalone macOS release (All-in-one agy.command launcher).
+- **AGY-Portable-v1.0.0-Linux.zip**: Standalone Linux release (All-in-one agy.sh launcher).
+
+### Highlights
+- Single USB drive shares credentials and conversation history across Windows, macOS, and Linux.
+- WinForms Hub on Windows with direct Google binary downloader and 1-click credential sync.
+- Interactive terminal menu and slash commands (/help, /download, /status, /import, /login, /clear) on macOS and Linux.
+- Zero host system pollution; no administrator privileges required.
+"@
+
+$postData = @{
+    tag_name = $Tag
+    target_commitish = "main"
+    name = $Title
+    body = $releaseBody
+    draft = $false
+    prerelease = $false
+} | ConvertTo-Json
+
+try {
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -Method Post -Headers $headers -Body $postData
+    Write-Host "[OK] Created Release: $($release.html_url)" -ForegroundColor Green
+    $uploadUrlBase = $release.upload_url -replace '\{\?name,label\}', ''
+} catch {
+    Write-Host "Checking if release already exists..." -ForegroundColor Yellow
+    $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/tags/$Tag" -Headers $headers
+    Write-Host "[Found] Existing Release: $($release.html_url)" -ForegroundColor Green
+    $uploadUrlBase = $release.upload_url -replace '\{\?name,label\}', ''
+}
+
+# Upload all zip files in Release folder
+$zipFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.zip"
+foreach ($z in $zipFiles) {
+    Write-Host "Uploading asset: $($z.Name) ($($z.Length / 1KB | ForEach-Object { '{0:N1} KB' -f $_ }))..." -ForegroundColor Cyan
+    $uploadUri = "$uploadUrlBase`?name=$($z.Name)"
+    $bytes = [System.IO.File]::ReadAllBytes($z.FullName)
+    
+    $uploadHeaders = @{
+        "Authorization" = "token $token"
+        "User-Agent" = "PowerShell-Release-Publisher"
+        "Content-Type" = "application/zip"
+    }
+
+    try {
+        $res = Invoke-RestMethod -Uri $uploadUri -Method Post -Headers $uploadHeaders -Body $bytes
+        Write-Host "[Uploaded] $($z.Name)" -ForegroundColor Green
+    } catch {
+        Write-Host "[Skip/Error] $($z.Name): $_" -ForegroundColor Yellow
+    }
+}
+
+Write-Host "Release publication complete! URL: $($release.html_url)" -ForegroundColor Green
