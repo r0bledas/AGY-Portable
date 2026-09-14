@@ -13,9 +13,8 @@ AGY-Portable/
 │
 ├── Windows/                 # Windows distribution
 │   ├── agy.cmd              # All-in-one launcher: Menu hub + Direct CLI + Auto-downloader
-│   ├── agy-admin.cmd        # Administrator launcher with auto UAC elevation
-│   ├── Unblock.cmd          # One-click utility to unblock Windows Mark of the Web
-│   ├── File Not Opening - Windows.txt # Windows troubleshooting & unblocking guide
+│   ├── agy-danger.cmd       # Runner with --dangerously-skip-permissions enabled
+│   ├── if file not opening, run as admin.txt # Quick tip for Windows permissions
 │   └── bin/agy.exe          # Windows CLI binary (ignored by git)
 │
 ├── macOS/                   # macOS distribution (single file launcher)
@@ -49,18 +48,19 @@ AGY-Portable/
 
 ## Usage by Platform
 
-### Windows (Dual-Launcher Architecture)
+### Windows (Dual-Runner Architecture)
 
-Inside `Windows/`, two native command scripts provide complete control without requiring .NET compilation or unsigned binaries:
+Inside `Windows/`, two native command launchers provide complete control without requiring .NET compilation or unsigned binaries:
 
 1. **Standard Launcher (`agy.cmd`)**:
-   * **Interactive Hub**: Double-click `Windows/agy.cmd` in Windows Explorer to open the interactive terminal menu.
+   * **Interactive Hub**: Double-click `Windows/agy.cmd` (or right-click and "Run as administrator" if Windows 11 blocks execution) to open the interactive terminal menu.
    * **Direct Pass-Through**: Run standard AGY CLI commands directly from CMD or PowerShell:
      * `Windows\agy.cmd models`
      * `Windows\agy.cmd -p "Explain relativity in one sentence"`
      * `Windows\agy.cmd --version`
    * **Slash Commands**: Run management commands directly:
      * `Windows\agy.cmd /help` - Show all available commands
+     * `Windows\agy.cmd /danger` - Launch in dangerously-skip-permissions mode
      * `Windows\agy.cmd /download` - Download official Windows binary directly from Google
      * `Windows\agy.cmd /update` - Update binary to latest Google release
      * `Windows\agy.cmd /status` - Display binary readiness and OAuth login status
@@ -69,12 +69,12 @@ Inside `Windows/`, two native command scripts provide complete control without r
      * `Windows\agy.cmd /login` - Sign in via Google OAuth in browser
      * `Windows\agy.cmd /clear` - Wipe credentials from USB
      * `Windows\agy.cmd /shell` - Open portable command prompt
-2. **Administrator Launcher (`agy-admin.cmd`)**:
-   * Double-click `Windows/agy-admin.cmd` to automatically prompt for Windows UAC privilege elevation and run the portable hub with full Administrator privileges.
-   * Automatically unblocks all USB files in the background upon first launch.
-   * Supports all arguments and pass-through flags in elevated mode.
-3. **First-Run Unblocking**:
-   * If Windows displays *"Windows no puede acceder al dispositivo..."*, double-click `Windows/Unblock.cmd` once to remove the Windows internet security block from all USB files. See `Windows/File Not Opening - Windows.txt` for details.
+2. **Dangerous Runner (`agy-danger.cmd`)**:
+   * Double-click `Windows/agy-danger.cmd` to open the interactive hub preset in `--dangerously-skip-permissions` mode.
+   * All tool calls, bash commands, file modifications, and agent actions will be auto-approved without prompting.
+   * Supports direct CLI pass-through with automatic permission skipping.
+3. **If File Not Opening**:
+   * On Windows 11 systems that restrict downloaded scripts from removable media, simply right-click `agy.cmd` or `agy-danger.cmd` and select "Run as administrator".
 4. **Zero-Trace Temp Runner**:
    * To bypass Windows 11 restrictions that block executing programs directly from USB flash drives ("Acceso denegado"), `agy.cmd` loads the core engine into a temporary sandbox with a real-time loading progress indicator.
    * The sandbox is automatically purged upon exit, leaving zero files on the host PC while keeping 100% of your credentials and conversations on the USB drive.

@@ -75,6 +75,13 @@ if /i "%ARG1%"=="shell" goto :do_shell
 if /i "%ARG1%"=="/menu" goto :do_menu
 if /i "%ARG1%"=="menu" goto :do_menu
 
+if /i "%ARG1%"=="/danger" (
+    set "AGY_SKIP_PERMISSIONS=1"
+    shift
+    if "%~1"=="" goto :do_menu
+    goto :do_run
+)
+
 if /i "%ARG1%"=="/run" (
     shift
     goto :do_run
@@ -228,6 +235,12 @@ if exist "%HOST_TOKEN%" (
 ) else (
     echo Host Auth: Not found on this PC
 )
+
+if defined AGY_SKIP_PERMISSIONS (
+    echo  Security: DANGEROUSLY SKIP PERMISSIONS [Auto-approves all tool actions]
+) else (
+    echo  Security: Standard [Prompts for tool approvals]
+)
 echo ------------------------------------------------------
 goto :eof
 
@@ -264,7 +277,11 @@ goto :eof
 call :prepare_runner
 if not exist "%TEMP_RUN_EXE%" exit /b 1
 call :set_env
-"%TEMP_RUN_EXE%" %*
+if defined AGY_SKIP_PERMISSIONS (
+    "%TEMP_RUN_EXE%" --dangerously-skip-permissions %*
+) else (
+    "%TEMP_RUN_EXE%" %*
+)
 set "RUN_EXIT=%ERRORLEVEL%"
 if not defined IN_MENU (
     call :cleanup_runner
@@ -291,7 +308,11 @@ call :set_env
 echo Launching Antigravity CLI to sign in...
 echo Follow the prompts in your browser or terminal to complete login.
 echo.
-"%TEMP_RUN_EXE%"
+if defined AGY_SKIP_PERMISSIONS (
+    "%TEMP_RUN_EXE%" --dangerously-skip-permissions
+) else (
+    "%TEMP_RUN_EXE%"
+)
 if not defined IN_MENU (
     call :cleanup_runner
 )
@@ -313,6 +334,7 @@ echo   /export       Export USB credentials to host PC (%%USERPROFILE%%\.gemini)
 echo   /login        Sign in via Google OAuth in your default browser
 echo   /clear        Wipe login credentials from USB for safe lending
 echo   /shell        Open an interactive shell with portable environment
+echo   /danger       Launch in dangerously-skip-permissions mode
 echo   /menu         Open the interactive terminal menu
 echo   /run [args]   Execute AGY CLI directly with arguments
 echo.
@@ -348,7 +370,11 @@ goto :eof
 set "IN_MENU=1"
 cls
 call :show_status
-echo  [1] Launch AGY CLI
+if defined AGY_SKIP_PERMISSIONS (
+    echo  [1] Launch AGY CLI [DANGEROUSLY SKIP PERMISSIONS]
+) else (
+    echo  [1] Launch AGY CLI
+)
 echo  [2] Open Interactive Portable Shell (/shell)
 echo  [3] Import Login from this PC (/import)
 echo  [4] Export USB Login to this PC (/export)

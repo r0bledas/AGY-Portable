@@ -30,16 +30,15 @@ A fully self-contained, USB-portable distribution of the Google Antigravity CLI 
 
 ### Release Assets Included
 - **AGY-Portable-$Tag-All-Platforms.zip**: Multi-platform USB distribution for Windows, macOS, and Linux.
-- **AGY-Portable-$Tag-Windows.zip**: Standalone Windows release (All-in-one agy.cmd and agy-admin.cmd launchers).
+- **AGY-Portable-$Tag-Windows.zip**: Standalone Windows release (All-in-one agy.cmd and agy-danger.cmd runners).
 - **AGY-Portable-$Tag-macOS.zip**: Standalone macOS release (All-in-one agy.command launcher).
 - **AGY-Portable-$Tag-Linux.zip**: Standalone Linux release (All-in-one agy.sh launcher).
 
 ### Highlights
 - Single USB drive shares credentials and conversation history across Windows, macOS, and Linux.
 - Interactive terminal menu, Google binary downloader, and 1-click credential sync across Windows, macOS, and Linux.
-- Windows includes both standard user (agy.cmd) and auto-elevating Administrator (agy-admin.cmd) launchers.
-- Interactive terminal menu and slash commands (/help, /download, /status, /import, /login, /clear) on macOS and Linux.
-- Zero host system pollution; no administrator privileges required.
+- Windows includes both standard user (agy.cmd) and auto-approved permissions (agy-danger.cmd) runners.
+- Zero host system pollution; zero-trace temporary runner cleans up on exit.
 "@
 
 $postData = @{
