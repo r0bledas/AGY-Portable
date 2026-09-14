@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
 # Shared root data directory or local data directory
-if [ -d "$SCRIPT_DIR/../data" ]; then
+if [ -d "$SCRIPT_DIR/../data" ] || [ -f "$SCRIPT_DIR/../README.md" ] || [ -d "$SCRIPT_DIR/../Windows" ]; then
     DATA_ROOT="$SCRIPT_DIR/../data"
 else
     DATA_ROOT="$SCRIPT_DIR/data"
@@ -260,8 +260,10 @@ do_shell() {
 do_login() {
     ensure_bin || exit 1
     export_env
-    echo "Initiating browser login flow..."
-    "$AGY_BIN" models
+    echo "Launching Antigravity CLI to sign in..."
+    echo "Follow the prompts in your browser or terminal to complete login."
+    echo ""
+    "$AGY_BIN"
 }
 
 do_menu() {

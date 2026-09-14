@@ -53,9 +53,14 @@ AGY-Portable/
 
 Inside `macOS/`, simply run `agy.command`:
 
-1. **Finder**: Double-click `macOS/agy.command` in Finder to open the interactive management menu.
-2. **Auto-Download**: If `bin/agy` is missing, `agy.command` automatically asks if you want to download the official macOS binary directly from Google or copy an existing local install.
-3. **Slash Commands**: Run commands directly in Terminal:
+1. **First Run on macOS (Gatekeeper Note)**:
+   * When downloaded from the internet via a browser, macOS Gatekeeper attaches a quarantine attribute to downloaded files.
+   * If macOS blocks opening `agy.command`, either:
+     * **Right-click (or Control-click)** `agy.command` -> click **Open** -> click **Open** on the prompt. (Only needed once).
+     * Or in Terminal run: `xattr -cr /Volumes/<YourUSB>/AGY-Portable`
+2. **Interactive Menu**: Double-click `macOS/agy.command` in Finder to open the interactive terminal management menu.
+3. **Auto-Download**: If `bin/agy` is missing, `agy.command` automatically asks if you want to download the official macOS binary directly from Google or copy an existing local install.
+4. **Slash Commands**: Run commands directly in Terminal:
    * `./macOS/agy.command /help` - List all commands
    * `./macOS/agy.command /download` - Download/install official macOS binary from Google
    * `./macOS/agy.command /update` - Update binary to latest Google release
@@ -65,7 +70,7 @@ Inside `macOS/`, simply run `agy.command`:
    * `./macOS/agy.command /login` - Sign in via Google OAuth in browser
    * `./macOS/agy.command /clear` - Wipe login token from USB
    * `./macOS/agy.command /shell` - Open portable subshell
-4. **Direct Pass-Through**: Run standard AGY CLI commands directly:
+5. **Direct Pass-Through**: Run standard AGY CLI commands directly:
    * `./macOS/agy.command models`
    * `./macOS/agy.command -p "Explain relativity in one sentence"`
 

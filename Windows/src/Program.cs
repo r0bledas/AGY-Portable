@@ -65,7 +65,7 @@ namespace AGYPortable
             _appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
             string parentDir = Directory.GetParent(_appDir) != null ? Directory.GetParent(_appDir).FullName.TrimEnd('\\') : _appDir;
 
-            if (Directory.Exists(Path.Combine(parentDir, "data")))
+            if (Directory.Exists(Path.Combine(parentDir, "data")) || File.Exists(Path.Combine(parentDir, "README.md")) || Directory.Exists(Path.Combine(parentDir, "macOS")))
             {
                 _dataRoot = Path.Combine(parentDir, "data");
             }
@@ -636,7 +636,7 @@ namespace AGYPortable
                 else if (mode == "auth")
                 {
                     psi.FileName = "cmd.exe";
-                    psi.Arguments = "/c title AGY Authentication && echo Initiating Google OAuth Login... && \"" + _coreExePath + "\" models && pause";
+                    psi.Arguments = "/c title AGY Authentication && echo Initiating Google OAuth Login... && \"" + _coreExePath + "\" && pause";
                 }
                 else // cmd shell
                 {
