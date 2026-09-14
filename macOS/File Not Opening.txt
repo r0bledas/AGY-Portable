@@ -1,0 +1,64 @@
+﻿# macOS Troubleshooting: "File Not Opening" or Gatekeeper Warning
+
+If macOS prevents you from opening agy.command or displays:
+"Apple could not verify agy.command is free of malware..."
+or "agy.command cannot be opened because it is from an unidentified developer"
+
+Here are the simple ways to open and run it:
+
+---
+
+## Method 1: Right-Click to Open (Fastest - No Terminal Required)
+
+1. In Finder, Right-Click (or hold the Control key and Click) on "agy.command".
+2. Select "Open" from the menu.
+3. A security dialog will appear with an "Open" button. Click "Open".
+
+macOS will remember this decision and allow agy.command to open normally with a double-click in the future.
+
+---
+
+## Method 2: Drag and Drop into Terminal
+
+1. Open the Terminal app (Press Command + Space, type "Terminal", and press Enter).
+2. Drag and drop "agy.command" from Finder directly into the Terminal window.
+   (Terminal will automatically fill in the full file path).
+3. Press Enter.
+
+The launcher will start immediately.
+
+---
+
+## Method 3: Remove Quarantine on the Entire Folder (Permanent Fix)
+
+When downloading zip files from GitHub using a web browser, macOS attaches a security quarantine flag to every file extracted. You can remove this flag with one command:
+
+1. Open Terminal.
+2. Type:
+   xattr -cr 
+   (include a space after -cr, do not press Enter yet).
+3. Drag and drop the "macOS" folder (or the entire "AGY-Portable" USB folder) into the Terminal window.
+4. Press Enter.
+
+All quarantine flags are stripped and every script will run with a standard double-click.
+
+---
+
+## Method 4: If you see "Permission Denied"
+
+If your USB drive's filesystem stripped executable permissions:
+
+1. Open Terminal.
+2. Type:
+   chmod +x 
+   (with a space at the end).
+3. Drag "agy.command" into the Terminal window.
+4. Press Enter.
+
+---
+
+## Method 5: If TextEdit Opens Instead of Terminal
+
+1. Right-Click on "agy.command" in Finder.
+2. Choose "Open With" -> "Terminal.app".
+3. To make it permanent: Right-Click -> "Get Info" -> under "Open with:", select "Terminal" -> click "Change All...".
