@@ -65,6 +65,13 @@ try {
 # Upload all zip files in Release folder
 $zipFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.zip"
 foreach ($z in $zipFiles) {
+    # Check if asset already exists in release and delete to overwrite
+    $existingAsset = $release.assets | Where-Object { $_.name -eq $z.Name }
+    if ($existingAsset) {
+        Write-Host "Replacing existing asset: $($existingAsset.name)..." -ForegroundColor Yellow
+        Invoke-RestMethod -Uri $existingAsset.url -Method Delete -Headers $headers | Out-Null
+    }
+
     Write-Host "Uploading asset: $($z.Name) ($($z.Length / 1KB | ForEach-Object { '{0:N1} KB' -f $_ }))..." -ForegroundColor Cyan
     $uploadUri = "$uploadUrlBase`?name=$($z.Name)"
     $bytes = [System.IO.File]::ReadAllBytes($z.FullName)
