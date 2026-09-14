@@ -1,8 +1,8 @@
-﻿# Build Release Packages for AGY-Portable
+# Build Release Packages for AGY-Portable
 $ErrorActionPreference = "Stop"
 $root = (Get-Item $PSScriptRoot).Parent.FullName
 $releaseDir = $PSScriptRoot
-$version = "v1.0.0"
+$version = "v1.1.0"
 
 Write-Host "Building AGY-Portable $version Release Packages..." -ForegroundColor Cyan
 

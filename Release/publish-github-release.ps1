@@ -1,7 +1,7 @@
 # Publish GitHub Release Script
 param(
-    [string]$Tag = "v1.0.0",
-    [string]$Title = "AGY-Portable v1.0.0 - Multi-Platform Portable Google Antigravity",
+    [string]$Tag = "v1.1.0",
+    [string]$Title = "AGY-Portable v1.1.0 - Windows CLI Modernization & Admin Hub",
     [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
 )
 
@@ -29,10 +29,10 @@ $releaseBody = @"
 A fully self-contained, USB-portable distribution of the Google Antigravity CLI (agy) for Windows, macOS, and Linux.
 
 ### Release Assets Included
-- **AGY-Portable-v1.0.0-All-Platforms.zip**: Multi-platform USB distribution for Windows, macOS, and Linux.
-- **AGY-Portable-v1.0.0-Windows.zip**: Standalone Windows release (All-in-one agy.cmd and agy-admin.cmd launchers).
-- **AGY-Portable-v1.0.0-macOS.zip**: Standalone macOS release (All-in-one agy.command launcher).
-- **AGY-Portable-v1.0.0-Linux.zip**: Standalone Linux release (All-in-one agy.sh launcher).
+- **AGY-Portable-$Tag-All-Platforms.zip**: Multi-platform USB distribution for Windows, macOS, and Linux.
+- **AGY-Portable-$Tag-Windows.zip**: Standalone Windows release (All-in-one agy.cmd and agy-admin.cmd launchers).
+- **AGY-Portable-$Tag-macOS.zip**: Standalone macOS release (All-in-one agy.command launcher).
+- **AGY-Portable-$Tag-Linux.zip**: Standalone Linux release (All-in-one agy.sh launcher).
 
 ### Highlights
 - Single USB drive shares credentials and conversation history across Windows, macOS, and Linux.
