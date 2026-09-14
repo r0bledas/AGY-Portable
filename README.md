@@ -1,4 +1,4 @@
-﻿# Google Antigravity (AGY) - Portable Edition
+# Google Antigravity (AGY) - Portable Edition
 
 A multi-platform, fully self-contained, USB-portable distribution of the **Google Antigravity CLI (`agy`)** for **Windows**, **macOS**, and **Linux**.
 
@@ -12,21 +12,27 @@ All platforms share the same root `data/` folder, allowing your login credential
 AGY-Portable/
 │
 ├── Windows/                 # Windows distribution
-│   ├── AGY-Launcher.exe     # WinForms Hub & Credential Manager (with direct Google downloader)
-│   ├── agy.cmd              # Command-line launcher (for CMD / PowerShell)
-│   ├── agy-shell.cmd        # Interactive Command Prompt with portable environment
-│   ├── setup-bin.ps1        # Auto-detects and copies installed agy.exe into bin/
-│   ├── build.ps1            # Rebuilds AGY-Launcher.exe using Windows csc.exe
-│   ├── src/Program.cs       # Complete C# WinForms source code
+│   ├── agy.cmd              # All-in-one launcher: Menu hub + Direct CLI + Auto-downloader
+│   ├── agy-admin.cmd        # Administrator launcher with auto UAC elevation
 │   └── bin/agy.exe          # Windows CLI binary (ignored by git)
 │
 ├── macOS/                   # macOS distribution (single file launcher)
 │   ├── agy.command          # All-in-one launcher: Finder double-click + Terminal CLI + Auto-downloader
+│   ├── File Not Opening.txt # Gatekeeper quarantine bypass instructions
 │   └── bin/agy              # macOS CLI binary (ignored by git)
 │
 ├── Linux/                   # Linux distribution (single file launcher)
 │   ├── agy.sh               # All-in-one launcher: Terminal menu + CLI + Auto-downloader
 │   └── bin/agy              # Linux CLI binary (ignored by git)
+│
+├── Release/                 # Automated release packages and publisher scripts
+│   ├── AGY-Portable-v1.0.0-All-Platforms.zip
+│   ├── AGY-Portable-v1.0.0-Windows.zip
+│   ├── AGY-Portable-v1.0.0-macOS.zip
+│   ├── AGY-Portable-v1.0.0-Linux.zip
+│   ├── build-release.ps1
+│   ├── publish-github-release.ps1
+│   └── README.md
 │
 ├── data/                    # Shared portable storage (never touches host PC, ignored by git)
 │   ├── home/
@@ -41,13 +47,30 @@ AGY-Portable/
 
 ## Usage by Platform
 
-### Windows
+### Windows (Dual-Launcher Architecture)
 
-1. **Graphical Hub**: Double-click `Windows/AGY-Launcher.exe` to manage logins, download/update the core binary directly from Google, and launch sessions.
-2. **Command Line**:
-   * Run `Windows/agy.cmd <flags>` directly from CMD or PowerShell.
-   * Double-click `Windows/agy-shell.cmd` to open a command shell with `agy` in your `PATH`.
-3. **Download Core**: If `bin/agy.exe` is missing, click "Download CLI Binary" in the launcher to download it directly from Google servers or copy it from your local install.
+Inside `Windows/`, two native command scripts provide complete control without requiring .NET compilation or unsigned binaries:
+
+1. **Standard Launcher (`agy.cmd`)**:
+   * **Interactive Hub**: Double-click `Windows/agy.cmd` in Windows Explorer to open the interactive terminal menu.
+   * **Direct Pass-Through**: Run standard AGY CLI commands directly from CMD or PowerShell:
+     * `Windows\agy.cmd models`
+     * `Windows\agy.cmd -p "Explain relativity in one sentence"`
+     * `Windows\agy.cmd --version`
+   * **Slash Commands**: Run management commands directly:
+     * `Windows\agy.cmd /help` - Show all available commands
+     * `Windows\agy.cmd /download` - Download official Windows binary directly from Google
+     * `Windows\agy.cmd /update` - Update binary to latest Google release
+     * `Windows\agy.cmd /status` - Display binary readiness and OAuth login status
+     * `Windows\agy.cmd /import` - Copy credentials from host PC (%USERPROFILE%\.gemini) to USB
+     * `Windows\agy.cmd /export` - Export USB credentials to host PC (%USERPROFILE%\.gemini)
+     * `Windows\agy.cmd /login` - Sign in via Google OAuth in browser
+     * `Windows\agy.cmd /clear` - Wipe credentials from USB
+     * `Windows\agy.cmd /shell` - Open portable command prompt
+2. **Administrator Launcher (`agy-admin.cmd`)**:
+   * Double-click `Windows/agy-admin.cmd` to automatically prompt for Windows UAC privilege elevation and run the portable hub with full Administrator privileges.
+   * Supports all arguments and pass-through flags in elevated mode.
+3. **Auto-Download**: If `bin/agy.exe` is missing, `agy.cmd` automatically asks to download the official Windows 64-bit binary directly from Google or copy an existing local installation.
 
 ### macOS (Single-File Launcher)
 
@@ -55,9 +78,8 @@ Inside `macOS/`, simply run `agy.command`:
 
 1. **First Run on macOS (Gatekeeper Note)**:
    * When downloaded from the internet via a browser, macOS Gatekeeper attaches a quarantine attribute to downloaded files.
-   * If macOS blocks opening `agy.command`, either:
-     * **Right-click (or Control-click)** `agy.command` -> click **Open** -> click **Open** on the prompt. (Only needed once).
-     * Or in Terminal run: `xattr -cr /Volumes/<YourUSB>/AGY-Portable`
+   * If macOS blocks opening `agy.command`, see `macOS/File Not Opening.txt` or run:
+     * `xattr -cr /Volumes/<YourUSB>/AGY-Portable`
 2. **Interactive Menu**: Double-click `macOS/agy.command` in Finder to open the interactive terminal management menu.
 3. **Auto-Download**: If `bin/agy` is missing, `agy.command` automatically asks if you want to download the official macOS binary directly from Google or copy an existing local install.
 4. **Slash Commands**: Run commands directly in Terminal:
@@ -96,5 +118,5 @@ Inside `Linux/`, simply run `agy.sh`:
 
 * **Zero Host Pollution**: All credentials, SQLite conversation databases, logs, and skills live strictly inside `data/` on the USB drive.
 * **Cross-Platform Sync**: Because SQLite databases and JSON OAuth tokens are cross-platform, a session started on Windows can be resumed on macOS or Linux using the same USB drive.
-* **No Administrator Rights Required**: Credentials and configuration files exist solely in user space across all platforms.
-* **Safe Traveling**: Clear your login token using `/clear` or the WinForms button before sharing the USB drive.
+* **No Administrator Rights Required**: Credentials and configuration files exist solely in user space across all platforms. Use `agy-admin.cmd` only when system-level modifications are needed.
+* **Safe Traveling**: Clear your login token using `/clear` or menu option [6] before sharing the USB drive.
