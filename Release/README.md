@@ -7,7 +7,7 @@ This directory contains standalone, ready-to-use distribution packages for AGY-P
 ## Available Packages
 
 * **AGY-Portable-v1.1.0-All-Platforms.zip**: Complete cross-platform USB package containing Windows, macOS, and Linux launchers with shared data routing.
-* **AGY-Portable-v1.1.0-Windows.zip**: Standalone Windows package containing agy.cmd and agy-admin.cmd.
+* **AGY-Portable-v1.1.0-Windows.zip**: Standalone Windows package containing agy.cmd, agy-admin.cmd, Unblock.cmd, and File Not Opening - Windows.txt.
 * **AGY-Portable-v1.1.0-macOS.zip**: Standalone macOS package containing agy.command and File Not Opening.txt.
 * **AGY-Portable-v1.1.0-Linux.zip**: Standalone Linux package containing agy.sh.
 

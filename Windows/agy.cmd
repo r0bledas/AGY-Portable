@@ -25,6 +25,13 @@ set "HOST_TOKEN=%USERPROFILE%\.gemini\jetski-standalone-oauth-token"
 set "BIN_DIR=%WIN_DIR%\bin"
 set "AGY_BIN=%BIN_DIR%\agy.exe"
 
+:: Temp runner sandbox configuration (bypasses Windows 11 USB execution policies)
+set "TEMP_RUN_DIR=%TEMP%\agy-portable-%RANDOM%"
+set "TEMP_RUN_EXE=%TEMP_RUN_DIR%\agy.exe"
+
+:: Silently clean up any leftover runner sandboxes from previously interrupted sessions
+for /d %%D in ("%TEMP%\agy-portable-*") do rmdir /s /q "%%D" 2>nul
+
 :: Create required directories silently
 if not exist "%PORTABLE_GEMINI%" mkdir "%PORTABLE_GEMINI%" 2>nul
 if not exist "%DATA_ROOT%\AppData\Roaming" mkdir "%DATA_ROOT%\AppData\Roaming" 2>nul
@@ -87,7 +94,7 @@ set "HOMEDRIVE=%DATA_ROOT:~0,2%"
 set "HOMEPATH=%DATA_ROOT:~2%\home"
 set "APPDATA=%DATA_ROOT%\AppData\Roaming"
 set "LOCALAPPDATA=%DATA_ROOT%\AppData\Local"
-set "PATH=%BIN_DIR%;%WIN_DIR%;%PATH%"
+set "PATH=%TEMP_RUN_DIR%;%BIN_DIR%;%WIN_DIR%;%PATH%"
 goto :eof
 
 :ensure_bin
@@ -119,6 +126,58 @@ if /i not "!DL_CONFIRM!"=="n" (
 echo [Error] Execution aborted. Please place agy.exe in Windows\bin\agy.exe.
 exit /b 1
 
+:prepare_runner
+call :ensure_bin
+if not exist "%AGY_BIN%" exit /b 1
+if defined RUNNER_READY if exist "%TEMP_RUN_EXE%" goto :eof
+
+if not exist "%TEMP_RUN_DIR%" mkdir "%TEMP_RUN_DIR%" 2>nul
+
+echo [Preparing Runner] Loading engine into temp sandbox for Windows 11...
+echo Reading from USB drive. Please wait (~190 MB)...
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$src = '%AGY_BIN%';" ^
+    "$dst = '%TEMP_RUN_EXE%';" ^
+    "$fileInfo = Get-Item $src;" ^
+    "$totalBytes = $fileInfo.Length;" ^
+    "$inStream = [System.IO.File]::OpenRead($src);" ^
+    "$outStream = [System.IO.File]::Create($dst);" ^
+    "$buffer = New-Object byte[] (4 * 1024 * 1024);" ^
+    "$copied = 0;" ^
+    "$lastPct = -1;" ^
+    "try {" ^
+    "    while (($read = $inStream.Read($buffer, 0, $buffer.Length)) -gt 0) {" ^
+    "        $outStream.Write($buffer, 0, $read);" ^
+    "        $copied += $read;" ^
+    "        $pct = [int](($copied / $totalBytes) * 100);" ^
+    "        if ($pct -ne $lastPct -and $pct %% 10 -eq 0) {" ^
+    "            $lastPct = $pct;" ^
+    "            Write-Host ('  - Progress: ' + $pct + '%% (' + [int]($copied / 1MB) + ' MB / ' + [int]($totalBytes / 1MB) + ' MB)');" ^
+    "        }" ^
+    "    }" ^
+    "} finally {" ^
+    "    $inStream.Close();" ^
+    "    $outStream.Close();" ^
+    "};" ^
+    "Unblock-File -Path $dst -ErrorAction SilentlyContinue;"
+
+if not exist "%TEMP_RUN_EXE%" (
+    echo [Error] Failed to load runner into temp sandbox.
+    exit /b 1
+)
+set "RUNNER_READY=1"
+echo [Ready] Engine loaded successfully.
+echo.
+goto :eof
+
+:cleanup_runner
+if exist "%TEMP_RUN_DIR%" (
+    rmdir /s /q "%TEMP_RUN_DIR%" 2>nul
+)
+set "RUNNER_READY="
+goto :eof
+
 :do_download
 echo ======================================================
 echo        Downloading Antigravity CLI for Windows
@@ -142,6 +201,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "if (Test-Path (Join-Path $binDir 'antigravity.exe')) { Move-Item -Path (Join-Path $binDir 'antigravity.exe') -Destination $targetExe -Force };" ^
     "Unblock-File -Path (Join-Path $binDir '*') -ErrorAction SilentlyContinue;" ^
     "Write-Host '[Success] Antigravity CLI installed successfully in bin\agy.exe!' -ForegroundColor Green;"
+call :cleanup_runner
 goto :eof
 
 :show_status
@@ -197,33 +257,44 @@ if exist "%PORTABLE_TOKEN%" (
 ) else (
     echo No credentials found on USB to clear.
 )
+call :cleanup_runner
 goto :eof
 
 :do_run
-call :ensure_bin
-if not exist "%AGY_BIN%" exit /b 1
+call :prepare_runner
+if not exist "%TEMP_RUN_EXE%" exit /b 1
 call :set_env
-"%AGY_BIN%" %*
-exit /b %ERRORLEVEL%
+"%TEMP_RUN_EXE%" %*
+set "RUN_EXIT=%ERRORLEVEL%"
+if not defined IN_MENU (
+    call :cleanup_runner
+)
+exit /b %RUN_EXIT%
 
 :do_shell
-call :ensure_bin
+call :prepare_runner
 call :set_env
 echo.
 echo Starting interactive portable shell...
 echo Type 'agy' to run the CLI. Type 'exit' to return.
 echo.
 cmd.exe /k
+if not defined IN_MENU (
+    call :cleanup_runner
+)
 goto :eof
 
 :do_login
-call :ensure_bin
-if not exist "%AGY_BIN%" exit /b 1
+call :prepare_runner
+if not exist "%TEMP_RUN_EXE%" exit /b 1
 call :set_env
 echo Launching Antigravity CLI to sign in...
 echo Follow the prompts in your browser or terminal to complete login.
 echo.
-"%AGY_BIN%"
+"%TEMP_RUN_EXE%"
+if not defined IN_MENU (
+    call :cleanup_runner
+)
 goto :eof
 
 :show_help
@@ -274,6 +345,7 @@ call :do_login
 goto :eof
 
 :do_menu
+set "IN_MENU=1"
 cls
 call :show_status
 echo  [1] Launch AGY CLI
@@ -343,6 +415,7 @@ if "%OPT%"=="8" (
     goto :do_menu
 )
 if "%OPT%"=="0" (
+    call :cleanup_runner
     echo Goodbye!
     exit /b 0
 )

@@ -14,6 +14,8 @@ AGY-Portable/
 ├── Windows/                 # Windows distribution
 │   ├── agy.cmd              # All-in-one launcher: Menu hub + Direct CLI + Auto-downloader
 │   ├── agy-admin.cmd        # Administrator launcher with auto UAC elevation
+│   ├── Unblock.cmd          # One-click utility to unblock Windows Mark of the Web
+│   ├── File Not Opening - Windows.txt # Windows troubleshooting & unblocking guide
 │   └── bin/agy.exe          # Windows CLI binary (ignored by git)
 │
 ├── macOS/                   # macOS distribution (single file launcher)
@@ -69,8 +71,14 @@ Inside `Windows/`, two native command scripts provide complete control without r
      * `Windows\agy.cmd /shell` - Open portable command prompt
 2. **Administrator Launcher (`agy-admin.cmd`)**:
    * Double-click `Windows/agy-admin.cmd` to automatically prompt for Windows UAC privilege elevation and run the portable hub with full Administrator privileges.
+   * Automatically unblocks all USB files in the background upon first launch.
    * Supports all arguments and pass-through flags in elevated mode.
-3. **Auto-Download**: If `bin/agy.exe` is missing, `agy.cmd` automatically asks to download the official Windows 64-bit binary directly from Google or copy an existing local installation.
+3. **First-Run Unblocking**:
+   * If Windows displays *"Windows no puede acceder al dispositivo..."*, double-click `Windows/Unblock.cmd` once to remove the Windows internet security block from all USB files. See `Windows/File Not Opening - Windows.txt` for details.
+4. **Zero-Trace Temp Runner**:
+   * To bypass Windows 11 restrictions that block executing programs directly from USB flash drives ("Acceso denegado"), `agy.cmd` loads the core engine into a temporary sandbox with a real-time loading progress indicator.
+   * The sandbox is automatically purged upon exit, leaving zero files on the host PC while keeping 100% of your credentials and conversations on the USB drive.
+5. **Auto-Download**: If `bin/agy.exe` is missing, `agy.cmd` automatically asks to download the official Windows 64-bit binary directly from Google or copy an existing local installation.
 
 ### macOS (Single-File Launcher)
 

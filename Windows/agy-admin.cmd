@@ -23,6 +23,8 @@ exit /b %ERRORLEVEL%
 :is_admin
 cd /d "%~dp0"
 title AGY-Portable [Administrator]
+:: Silently unblock USB files in the background on elevated execution
+start /b powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path '%~dp0..' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File" >nul 2>&1
 call "%~dp0agy.cmd" %*
 set "EXIT_CODE=%ERRORLEVEL%"
 
