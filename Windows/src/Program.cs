@@ -1,7 +1,10 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Net;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace AGYPortable
@@ -22,10 +25,12 @@ namespace AGYPortable
         private string _appDir;
         private string _dataRoot;
         private string _coreExePath;
+        private string _binDir;
         private string _portableTokenPath;
         private string _portableHomeDir;
         private string _hostTokenPath;
         private string _hostGeminiDir;
+        private string _hostAgyExe;
 
         // Status labels
         private Label _lblPath;
@@ -44,6 +49,7 @@ namespace AGYPortable
         private Button _btnOpenData;
         private Button _btnOpenConversations;
         private Button _btnRefresh;
+        private Button _btnDownloadCore;
 
         private ToolTip _toolTip;
 
@@ -59,7 +65,6 @@ namespace AGYPortable
             _appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
             string parentDir = Directory.GetParent(_appDir) != null ? Directory.GetParent(_appDir).FullName.TrimEnd('\\') : _appDir;
 
-            // Shared root data directory or local data directory
             if (Directory.Exists(Path.Combine(parentDir, "data")))
             {
                 _dataRoot = Path.Combine(parentDir, "data");
@@ -69,7 +74,8 @@ namespace AGYPortable
                 _dataRoot = Path.Combine(_appDir, "data");
             }
 
-            _coreExePath = Path.Combine(_appDir, "bin", "agy.exe");
+            _binDir = Path.Combine(_appDir, "bin");
+            _coreExePath = Path.Combine(_binDir, "agy.exe");
 
             _portableHomeDir = Path.Combine(_dataRoot, "home");
             string portableGeminiDir = Path.Combine(_portableHomeDir, ".gemini");
@@ -78,6 +84,9 @@ namespace AGYPortable
             string hostProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             _hostGeminiDir = Path.Combine(hostProfile, ".gemini");
             _hostTokenPath = Path.Combine(_hostGeminiDir, "jetski-standalone-oauth-token");
+
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            _hostAgyExe = Path.Combine(localAppData, "agy", "bin", "agy.exe");
         }
 
         private void InitializeComponent()
@@ -193,19 +202,10 @@ namespace AGYPortable
             RegisterButton(_btnExport, 
                 "Copies the USB login token onto this computer's local user profile (~/.gemini).");
 
-            Label lblAdminNote = new Label
-            {
-                Text = "Note: Credentials live in standard user profile; no admin rights required.",
-                Location = new Point(187, 76),
-                Size = new Size(335, 20),
-                ForeColor = SystemColors.GrayText
-            };
-
             gbAuth.Controls.Add(_btnImport);
             gbAuth.Controls.Add(_btnSignIn);
             gbAuth.Controls.Add(_btnClearUsb);
             gbAuth.Controls.Add(_btnExport);
-            gbAuth.Controls.Add(lblAdminNote);
             this.Controls.Add(gbAuth);
 
             // 3. GroupBox: Actions
@@ -272,11 +272,23 @@ namespace AGYPortable
             RegisterButton(_btnRefresh, 
                 "Re-scans the USB drive and the host PC to update the status indicators above.");
 
+            _btnDownloadCore = new Button
+            {
+                Text = "Download CLI Binary",
+                Location = new Point(360, 74),
+                Size = new Size(160, 32),
+                UseVisualStyleBackColor = true
+            };
+            _btnDownloadCore.Click += BtnDownloadCore_Click;
+            RegisterButton(_btnDownloadCore, 
+                "Downloads the official Google Antigravity CLI binary directly from Google servers or copies it from this PC.");
+
             gbLaunch.Controls.Add(_btnLaunchAgy);
             gbLaunch.Controls.Add(_btnLaunchShell);
             gbLaunch.Controls.Add(_btnOpenData);
             gbLaunch.Controls.Add(_btnOpenConversations);
             gbLaunch.Controls.Add(_btnRefresh);
+            gbLaunch.Controls.Add(_btnDownloadCore);
             this.Controls.Add(gbLaunch);
         }
 
@@ -305,13 +317,15 @@ namespace AGYPortable
                 _lblCoreStatus.ForeColor = Color.DarkGreen;
                 _btnLaunchAgy.Enabled = true;
                 _btnLaunchShell.Enabled = true;
+                _btnDownloadCore.Text = "Update CLI Binary";
             }
             else
             {
-                _lblCoreStatus.Text = "CLI Binary: Not found in bin\\agy.exe";
+                _lblCoreStatus.Text = "CLI Binary: Not found (Click 'Download CLI Binary' below)";
                 _lblCoreStatus.ForeColor = Color.Red;
                 _btnLaunchAgy.Enabled = false;
                 _btnLaunchShell.Enabled = false;
+                _btnDownloadCore.Text = "Download CLI Binary";
             }
 
             if (File.Exists(_portableTokenPath))
@@ -341,6 +355,151 @@ namespace AGYPortable
                 _lblHostAuthStatus.Text = "Host PC Login: No login found on this computer";
                 _lblHostAuthStatus.ForeColor = SystemColors.GrayText;
                 _btnImport.Enabled = false;
+            }
+        }
+
+        private void BtnDownloadCore_Click(object sender, EventArgs e)
+        {
+            // If local host binary exists, offer instant copy
+            if (File.Exists(_hostAgyExe))
+            {
+                DialogResult dr = MessageBox.Show(
+                    "Found installed Google Antigravity binary on this PC at:\n" + _hostAgyExe + 
+                    "\n\nWould you like to copy it from this PC (Instant)?\n\nClick 'Yes' to copy from PC, or 'No' to download fresh from Google.",
+                    "Binary Source",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question);
+
+                if (dr == DialogResult.Yes)
+                {
+                    try
+                    {
+                        if (!Directory.Exists(_binDir)) Directory.CreateDirectory(_binDir);
+                        File.Copy(_hostAgyExe, _coreExePath, true);
+                        RefreshStatus();
+                        MessageBox.Show("Copied agy.exe into bin\\agy.exe successfully!", "Ready", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Failed to copy from PC: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+                else if (dr == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+
+            // Download directly from Google servers
+            StartDownloadFromGoogle();
+        }
+
+        private void StartDownloadFromGoogle()
+        {
+            try
+            {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                string manifestUrl = "https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/windows_amd64.json";
+
+                string downloadUrl = null;
+                string version = "latest";
+
+                using (WebClient manifestClient = new WebClient())
+                {
+                    manifestClient.Headers["User-Agent"] = "agy-portable/1.0";
+                    string json = manifestClient.DownloadString(manifestUrl);
+                    Match mUrl = Regex.Match(json, "\"url\"\\s*:\\s*\"([^\"]+)\"");
+                    Match mVer = Regex.Match(json, "\"version\"\\s*:\\s*\"([^\"]+)\"");
+                    if (mUrl.Success) downloadUrl = mUrl.Groups[1].Value;
+                    if (mVer.Success) version = mVer.Groups[1].Value;
+                }
+
+                if (string.IsNullOrEmpty(downloadUrl))
+                {
+                    // Fallback to direct storage URL if manifest format differs
+                    downloadUrl = "https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/windows-x64/cli_windows_x64.exe";
+                }
+
+                DialogResult confirm = MessageBox.Show(
+                    string.Format("Download Antigravity CLI v{0} (~193 MB) from Google servers?\n\nURL: {1}", version, downloadUrl),
+                    "Confirm Download",
+                    MessageBoxButtons.OKCancel,
+                    MessageBoxIcon.Information);
+
+                if (confirm != DialogResult.OK) return;
+
+                if (!Directory.Exists(_binDir)) Directory.CreateDirectory(_binDir);
+                string tempTarget = _coreExePath + ".downloading";
+
+                // Progress Dialog
+                Form progressForm = new Form
+                {
+                    Text = "Downloading Antigravity CLI...",
+                    ClientSize = new Size(420, 110),
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    StartPosition = FormStartPosition.CenterParent,
+                    MaximizeBox = false,
+                    MinimizeBox = false,
+                    ControlBox = false
+                };
+
+                Label lblStatus = new Label
+                {
+                    Location = new Point(20, 15),
+                    Size = new Size(380, 20),
+                    Text = "Connecting to Google servers..."
+                };
+
+                ProgressBar pb = new ProgressBar
+                {
+                    Location = new Point(20, 42),
+                    Size = new Size(380, 24),
+                    Minimum = 0,
+                    Maximum = 100,
+                    Value = 0
+                };
+
+                progressForm.Controls.Add(lblStatus);
+                progressForm.Controls.Add(pb);
+
+                WebClient downloader = new WebClient();
+                downloader.Headers["User-Agent"] = "agy-portable/1.0";
+
+                downloader.DownloadProgressChanged += (s, pe) =>
+                {
+                    pb.Value = pe.ProgressPercentage;
+                    lblStatus.Text = string.Format("Downloading: {0}% ({1:F1} MB / {2:F1} MB)",
+                        pe.ProgressPercentage,
+                        pe.BytesReceived / (1024.0 * 1024.0),
+                        pe.TotalBytesToReceive / (1024.0 * 1024.0));
+                };
+
+                downloader.DownloadFileCompleted += (s, ce) =>
+                {
+                    progressForm.Close();
+                    if (ce.Error != null)
+                    {
+                        if (File.Exists(tempTarget)) File.Delete(tempTarget);
+                        MessageBox.Show("Download failed: " + ce.Error.Message, "Download Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    else
+                    {
+                        if (File.Exists(_coreExePath)) File.Delete(_coreExePath);
+                        File.Move(tempTarget, _coreExePath);
+                        RefreshStatus();
+                        MessageBox.Show("Antigravity CLI v" + version + " downloaded successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    downloader.Dispose();
+                };
+
+                downloader.DownloadFileAsync(new Uri(downloadUrl), tempTarget);
+                progressForm.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Unable to initiate download: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
