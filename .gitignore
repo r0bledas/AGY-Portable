@@ -7,12 +7,15 @@ jetski-standalone-oauth-token
 *.db-wal
 *.log
 
-# Large core binary (~193 MB Google proprietary CLI engine)
-bin/agy.exe
-bin/*.exe.old
+# Large core binaries (~193 MB Google proprietary CLI engines)
+Windows/bin/agy.exe
+Windows/bin/*.old
+macOS/bin/agy
+Linux/bin/agy
 
 # OS / Editor artifacts
 .vs/
 .vscode/
 Thumbs.db
 Desktop.ini
+.DS_Store

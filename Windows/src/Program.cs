@@ -19,7 +19,8 @@ namespace AGYPortable
 
     public class MainForm : Form
     {
-        private string _portableRoot;
+        private string _appDir;
+        private string _dataRoot;
         private string _coreExePath;
         private string _portableTokenPath;
         private string _portableHomeDir;
@@ -55,10 +56,22 @@ namespace AGYPortable
 
         private void InitializePaths()
         {
-            _portableRoot = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
-            _coreExePath = Path.Combine(_portableRoot, "bin", "agy.exe");
+            _appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+            string parentDir = Directory.GetParent(_appDir) != null ? Directory.GetParent(_appDir).FullName.TrimEnd('\\') : _appDir;
 
-            _portableHomeDir = Path.Combine(_portableRoot, "data", "home");
+            // Shared root data directory or local data directory
+            if (Directory.Exists(Path.Combine(parentDir, "data")))
+            {
+                _dataRoot = Path.Combine(parentDir, "data");
+            }
+            else
+            {
+                _dataRoot = Path.Combine(_appDir, "data");
+            }
+
+            _coreExePath = Path.Combine(_appDir, "bin", "agy.exe");
+
+            _portableHomeDir = Path.Combine(_dataRoot, "home");
             string portableGeminiDir = Path.Combine(_portableHomeDir, ".gemini");
             _portableTokenPath = Path.Combine(portableGeminiDir, "jetski-standalone-oauth-token");
 
@@ -69,7 +82,7 @@ namespace AGYPortable
 
         private void InitializeComponent()
         {
-            this.Text = "Antigravity Portable Hub";
+            this.Text = "Antigravity Portable Hub (Windows)";
             this.ClientSize = new Size(565, 410);
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -98,7 +111,7 @@ namespace AGYPortable
             {
                 Location = new Point(15, 23),
                 Size = new Size(505, 20),
-                Text = "Location: " + _portableRoot
+                Text = "Location: " + _appDir + " (Data: " + _dataRoot + ")"
             };
 
             _lblCoreStatus = new Label
@@ -285,7 +298,6 @@ namespace AGYPortable
 
         private void RefreshStatus()
         {
-            // Core binary status
             if (File.Exists(_coreExePath))
             {
                 FileInfo fi = new FileInfo(_coreExePath);
@@ -302,7 +314,6 @@ namespace AGYPortable
                 _btnLaunchShell.Enabled = false;
             }
 
-            // Portable token status
             if (File.Exists(_portableTokenPath))
             {
                 FileInfo fi = new FileInfo(_portableTokenPath);
@@ -319,7 +330,6 @@ namespace AGYPortable
                 _btnExport.Enabled = false;
             }
 
-            // Host token status
             if (File.Exists(_hostTokenPath))
             {
                 _lblHostAuthStatus.Text = "Host PC Login: Detected on this computer";
@@ -446,18 +456,18 @@ namespace AGYPortable
             try
             {
                 ProcessStartInfo psi = new ProcessStartInfo();
-                psi.WorkingDirectory = _portableRoot;
+                psi.WorkingDirectory = _appDir;
                 psi.UseShellExecute = false;
 
                 // Configure Isolated Portable Environment
-                psi.EnvironmentVariables["PORTABLE_ROOT"] = _portableRoot;
+                psi.EnvironmentVariables["PORTABLE_ROOT"] = _appDir;
                 psi.EnvironmentVariables["USERPROFILE"] = _portableHomeDir;
                 psi.EnvironmentVariables["HOME"] = _portableHomeDir;
-                psi.EnvironmentVariables["HOMEDRIVE"] = _portableRoot.Substring(0, 2);
+                psi.EnvironmentVariables["HOMEDRIVE"] = _dataRoot.Substring(0, 2);
                 psi.EnvironmentVariables["HOMEPATH"] = _portableHomeDir.Substring(2);
-                psi.EnvironmentVariables["APPDATA"] = Path.Combine(_portableRoot, "data", "AppData", "Roaming");
-                psi.EnvironmentVariables["LOCALAPPDATA"] = Path.Combine(_portableRoot, "data", "AppData", "Local");
-                psi.EnvironmentVariables["PATH"] = Path.Combine(_portableRoot, "bin") + ";" + _portableRoot + ";" + Environment.GetEnvironmentVariable("PATH");
+                psi.EnvironmentVariables["APPDATA"] = Path.Combine(_dataRoot, "AppData", "Roaming");
+                psi.EnvironmentVariables["LOCALAPPDATA"] = Path.Combine(_dataRoot, "AppData", "Local");
+                psi.EnvironmentVariables["PATH"] = Path.Combine(_appDir, "bin") + ";" + _appDir + ";" + Environment.GetEnvironmentVariable("PATH");
 
                 if (mode == "agy")
                 {
@@ -472,7 +482,7 @@ namespace AGYPortable
                 else // cmd shell
                 {
                     psi.FileName = "cmd.exe";
-                    psi.Arguments = "/k \"" + Path.Combine(_portableRoot, "agy-shell.cmd") + "\"";
+                    psi.Arguments = "/k \"" + Path.Combine(_appDir, "agy-shell.cmd") + "\"";
                 }
 
                 Process proc = Process.Start(psi);
