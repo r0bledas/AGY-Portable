@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Google Antigravity (AGY) - All-in-One Portable Launcher (Linux)
-# Run in terminal: ./agy.sh [/help] or double-click in desktop file manager
+# Google Antigravity (AGY) - All-in-One Portable Launcher (macOS)
+# Double-click in macOS Finder or run in Terminal: ./agy.command [/help]
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
+# Shared root data directory or local data directory
 if [ -d "$SCRIPT_DIR/../data" ]; then
     DATA_ROOT="$SCRIPT_DIR/../data"
 else
@@ -30,31 +31,37 @@ export_env() {
     export PATH="$BIN_DIR:$SCRIPT_DIR:$PATH"
 }
 
+# Resolve or fix binary if needed
 resolve_binary() {
+    # If antigravity exists but agy doesn't, copy or link it
     if [ -f "$BIN_DIR/antigravity" ] && [ ! -f "$AGY_BIN" ]; then
         cp "$BIN_DIR/antigravity" "$AGY_BIN"
         chmod +x "$AGY_BIN" "$BIN_DIR/antigravity" 2>/dev/null
     fi
 
+    # Fix permissions and macOS Gatekeeper quarantine
     if [ -f "$AGY_BIN" ]; then
         chmod +x "$AGY_BIN" 2>/dev/null
+        xattr -dr com.apple.quarantine "$AGY_BIN" 2>/dev/null || true
+        xattr -cr "$AGY_BIN" 2>/dev/null || true
         return 0
     fi
     return 1
 }
 
+# Download or update binary from Google
 do_download() {
     echo "======================================================"
-    echo "       Downloading Antigravity CLI for Linux"
+    echo "       Downloading Antigravity CLI for macOS"
     echo "======================================================"
 
     ARCH=$(uname -m)
-    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-        MANIFEST="linux_arm64.json"
-        DL_FALLBACK="https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/linux-arm/cli_linux_arm64.tar.gz"
+    if [ "$ARCH" = "arm64" ]; then
+        MANIFEST="darwin_arm64.json"
+        DL_FALLBACK="https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/darwin-arm/cli_mac_arm64.tar.gz"
     else
-        MANIFEST="linux_amd64.json"
-        DL_FALLBACK="https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/linux-x64/cli_linux_x64.tar.gz"
+        MANIFEST="darwin_amd64.json"
+        DL_FALLBACK="https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/darwin-x64/cli_mac_x64.tar.gz"
     fi
 
     echo "Architecture: $ARCH"
@@ -68,8 +75,8 @@ do_download() {
 
     echo "Download URL: $DL_URL"
     TMP_ARCHIVE="$BIN_DIR/agy_archive.tar.gz"
-
-    echo "Downloading (~50 MB compressed, ~200 MB uncompressed)..."
+    
+    echo "Downloading (~50 MB compressed, ~190 MB uncompressed)..."
     if ! curl -L --progress-bar -o "$TMP_ARCHIVE" "$DL_URL"; then
         echo "[Error] Download failed."
         rm -f "$TMP_ARCHIVE"
@@ -80,12 +87,16 @@ do_download() {
     tar -xzf "$TMP_ARCHIVE" -C "$BIN_DIR"
     rm -f "$TMP_ARCHIVE"
 
+    # Archive extracts file named 'antigravity'
     if [ -f "$BIN_DIR/antigravity" ]; then
         cp -f "$BIN_DIR/antigravity" "$AGY_BIN"
     fi
 
     if [ -f "$AGY_BIN" ]; then
         chmod +x "$AGY_BIN" "$BIN_DIR/antigravity" 2>/dev/null
+        # Remove macOS quarantine flag so Gatekeeper allows execution
+        xattr -dr com.apple.quarantine "$AGY_BIN" 2>/dev/null || true
+        xattr -cr "$AGY_BIN" 2>/dev/null || true
         echo "[Success] Antigravity CLI binary installed and ready in bin/agy!"
         return 0
     else
@@ -100,15 +111,17 @@ ensure_bin() {
     fi
 
     echo "======================================================"
-    echo " Antigravity CLI binary not found in Linux/bin/agy"
+    echo " Antigravity CLI binary not found in macOS/bin/agy"
     echo "======================================================"
 
+    # Check local Mac installation first
     SYS_AGY=$(which agy 2>/dev/null)
     if [ -z "$SYS_AGY" ] || [ ! -f "$SYS_AGY" ]; then
         CANDIDATES=(
             "$HOME/.local/bin/agy"
             "/usr/local/bin/agy"
-            "$HOME/.agy/bin/agy"
+            "/opt/homebrew/bin/agy"
+            "$HOME/Library/Application Support/agy/bin/agy"
         )
         for c in "${CANDIDATES[@]}"; do
             if [ -f "$c" ]; then
@@ -119,12 +132,13 @@ ensure_bin() {
     fi
 
     if [ -n "$SYS_AGY" ] && [ -f "$SYS_AGY" ]; then
-        echo "Found existing installation on this Linux machine at: $SYS_AGY"
-        printf "Copy from this machine to USB? [Y/n]: "
+        echo "Found existing installation on this Mac at: $SYS_AGY"
+        printf "Copy from this Mac to USB? [Y/n]: "
         read -r COPY_CONFIRM
         if [ "$COPY_CONFIRM" != "n" ] && [ "$COPY_CONFIRM" != "N" ]; then
             cp "$SYS_AGY" "$AGY_BIN"
             chmod +x "$AGY_BIN"
+            xattr -dr com.apple.quarantine "$AGY_BIN" 2>/dev/null || true
             echo "[Success] Copied agy into bin/agy!"
             return 0
         fi
@@ -138,14 +152,14 @@ ensure_bin() {
         return $?
     fi
 
-    echo "Aborted. Please place your Linux agy binary in Linux/bin/agy."
+    echo "Aborted. Please place your macOS agy binary in macOS/bin/agy."
     return 1
 }
 
 show_status() {
     resolve_binary
     echo "======================================================"
-    echo "       Google Antigravity (AGY) - Linux Hub"
+    echo "       Google Antigravity (AGY) - macOS Hub"
     echo "======================================================"
     echo " Location: $SCRIPT_DIR"
     echo " Data Dir: $DATA_ROOT"
@@ -158,33 +172,33 @@ show_status() {
     fi
     
     if [ -f "$PORTABLE_TOKEN" ]; then
-        MOD_TIME=$(date -r "$PORTABLE_TOKEN" "+%Y-%m-%d %H:%M" 2>/dev/null || echo "Present")
+        MOD_TIME=$(date -r "$PORTABLE_TOKEN" "+%Y-%m-%d %H:%M" 2>/dev/null || stat -f "%Sm" "$PORTABLE_TOKEN" 2>/dev/null || echo "Present")
         echo " USB Auth: Authenticated (Modified: $MOD_TIME)"
     else
         echo " USB Auth: Not logged in (Use /import or /login)"
     fi
     
     if [ -f "$HOST_TOKEN" ]; then
-        echo "Host Auth: Detected on this machine ($HOST_TOKEN)"
+        echo "Host Auth: Detected on this Mac ($HOST_TOKEN)"
     else
-        echo "Host Auth: Not found on this machine"
+        echo "Host Auth: Not found on this Mac"
     fi
     echo "------------------------------------------------------"
 }
 
 show_help() {
     echo "================================================================="
-    echo "  Google Antigravity (AGY) - Linux Portable Command Reference"
+    echo "  Google Antigravity (AGY) - macOS Portable Command Reference"
     echo "================================================================="
-    echo "Usage: ./agy.sh [command] [options]"
+    echo "Usage: ./agy.command [command] [options]"
     echo ""
     echo "Slash Commands:"
     echo "  /help         Show this help screen with all available commands"
     echo "  /download     Download official AGY binary directly from Google"
     echo "  /update       Update AGY binary to the latest version from Google"
     echo "  /status       Display binary readiness and OAuth login status"
-    echo "  /import       Import host machine credentials (~/.gemini) to USB"
-    echo "  /export       Export USB credentials to host machine (~/.gemini)"
+    echo "  /import       Import host Mac credentials (~/.gemini) to USB"
+    echo "  /export       Export USB credentials to host Mac (~/.gemini)"
     echo "  /login        Sign in via Google OAuth in your default browser"
     echo "  /clear        Wipe login credentials from USB for safe lending"
     echo "  /shell        Open an interactive shell with portable environment"
@@ -193,9 +207,9 @@ show_help() {
     echo ""
     echo "Direct CLI Pass-Through:"
     echo "  You can pass standard AGY CLI flags directly, for example:"
-    echo "    ./agy.sh models"
-    echo "    ./agy.sh -p \"Explain relativity in one sentence\""
-    echo "    ./agy.sh --version"
+    echo "    ./agy.command models"
+    echo "    ./agy.command -p \"Explain relativity in one sentence\""
+    echo "    ./agy.command --version"
     echo "================================================================="
 }
 
@@ -206,7 +220,7 @@ do_import() {
     fi
     mkdir -p "$PORTABLE_GEMINI"
     cp "$HOST_TOKEN" "$PORTABLE_TOKEN"
-    echo "[Success] Credentials copied from this machine to your USB drive!"
+    echo "[Success] Credentials copied from this Mac to your USB drive!"
 }
 
 do_export() {
@@ -217,7 +231,7 @@ do_export() {
     HOST_GEMINI_DIR=$(dirname "$HOST_TOKEN")
     mkdir -p "$HOST_GEMINI_DIR"
     cp "$PORTABLE_TOKEN" "$HOST_TOKEN"
-    echo "[Success] Credentials exported to this machine ($HOST_TOKEN)."
+    echo "[Success] Credentials exported to this Mac ($HOST_TOKEN)."
 }
 
 do_clear() {
@@ -256,8 +270,8 @@ do_menu() {
         show_status
         echo " [1] Launch AGY CLI"
         echo " [2] Open Interactive Portable Shell"
-        echo " [3] Import Login from this Machine (/import)"
-        echo " [4] Export USB Login to this Machine (/export)"
+        echo " [3] Import Login from this Mac (/import)"
+        echo " [4] Export USB Login to this Mac (/export)"
         echo " [5] Sign In via Browser (/login)"
         echo " [6] Clear USB Login (/clear)"
         echo " [7] Download / Update Core Binary (/download)"
@@ -325,6 +339,7 @@ do_menu() {
     done
 }
 
+# If no arguments given, open menu
 if [ $# -eq 0 ]; then
     do_menu
     exit 0
