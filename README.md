@@ -14,6 +14,7 @@ AGY-Portable/
 ├── Windows/                 # Windows distribution
 │   ├── agy.cmd              # All-in-one launcher: Menu hub + Direct CLI + Auto-downloader
 │   ├── agy-danger.cmd       # Runner with --dangerously-skip-permissions enabled
+│   ├── updater.ps1          # Dual-track updater (GitHub scripts + Google CLI engine)
 │   ├── if file not opening, run as admin.txt # Quick tip for Windows permissions
 │   └── bin/agy.exe          # Windows CLI binary (ignored by git)
 │
@@ -123,5 +124,5 @@ Inside `Linux/`, simply run `agy.sh`:
 
 * **Zero Host Pollution**: All credentials, SQLite conversation databases, logs, and skills live strictly inside `data/` on the USB drive.
 * **Cross-Platform Sync**: Because SQLite databases and JSON OAuth tokens are cross-platform, a session started on Windows can be resumed on macOS or Linux using the same USB drive.
-* **No Administrator Rights Required**: Credentials and configuration files exist solely in user space across all platforms. Use `agy-admin.cmd` only when system-level modifications are needed.
+* **No Administrator Rights Required**: Credentials and configuration files exist solely in user space across all platforms. Use right-click "Run as administrator" on `agy.cmd` only when Windows 11 blocks USB script execution.
 * **Safe Traveling**: Clear your login token using `/clear` or menu option [6] before sharing the USB drive.
