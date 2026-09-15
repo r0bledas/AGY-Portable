@@ -183,6 +183,11 @@ show_status() {
     else
         echo "Host Auth: Not found on this Mac"
     fi
+    if [ -n "$AGY_SKIP_PERMISSIONS" ]; then
+        echo " Security: DANGEROUSLY SKIP PERMISSIONS (Auto-approves all tool actions)"
+    else
+        echo " Security: Standard (Prompts for tool approvals)"
+    fi
     echo "------------------------------------------------------"
 }
 
@@ -194,6 +199,7 @@ show_help() {
     echo ""
     echo "Slash Commands:"
     echo "  /help         Show this help screen with all available commands"
+    echo "  /danger       Launch in dangerously-skip-permissions mode"
     echo "  /download     Download official AGY binary directly from Google"
     echo "  /update       Update AGY binary to the latest version from Google"
     echo "  /status       Display binary readiness and OAuth login status"
@@ -246,7 +252,11 @@ do_clear() {
 do_run() {
     ensure_bin || exit 1
     export_env
-    "$AGY_BIN" "$@"
+    if [ -n "$AGY_SKIP_PERMISSIONS" ]; then
+        "$AGY_BIN" --dangerously-skip-permissions "$@"
+    else
+        "$AGY_BIN" "$@"
+    fi
 }
 
 do_shell() {
@@ -263,14 +273,22 @@ do_login() {
     echo "Launching Antigravity CLI to sign in..."
     echo "Follow the prompts in your browser or terminal to complete login."
     echo ""
-    "$AGY_BIN"
+    if [ -n "$AGY_SKIP_PERMISSIONS" ]; then
+        "$AGY_BIN" --dangerously-skip-permissions
+    else
+        "$AGY_BIN"
+    fi
 }
 
 do_menu() {
     while true; do
         clear
         show_status
-        echo " [1] Launch AGY CLI"
+        if [ -n "$AGY_SKIP_PERMISSIONS" ]; then
+            echo " [1] Launch AGY CLI [DANGEROUSLY SKIP PERMISSIONS]"
+        else
+            echo " [1] Launch AGY CLI"
+        fi
         echo " [2] Open Interactive Portable Shell"
         echo " [3] Import Login from this Mac (/import)"
         echo " [4] Export USB Login to this Mac (/export)"
@@ -349,6 +367,15 @@ fi
 
 ARG1="$1"
 case "$ARG1" in
+    /danger|danger|--danger)
+        export AGY_SKIP_PERMISSIONS=1
+        shift
+        if [ $# -eq 0 ]; then
+            do_menu
+        else
+            do_run "$@"
+        fi
+        ;;
     /help|help|-h|--help)
         show_help
         ;;
