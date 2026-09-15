@@ -1,6 +1,6 @@
 param(
     [string]$Repo = "r0bledas/AGY-Portable",
-    [string]$CurrentVersion = "v1.5.0",
+    [string]$CurrentVersion = "v1.6.0",
     [string]$WinDir = $PSScriptRoot,
     [string]$BinDir = (Join-Path $PSScriptRoot "bin"),
     [string]$TargetExe = (Join-Path $PSScriptRoot "bin\agy.exe")
@@ -19,8 +19,8 @@ try {
     Write-Host ("  Current Launcher : " + $CurrentVersion)
     Write-Host ("  Latest on GitHub : " + $latestTag)
 
-    $curClean = $CurrentVersion.TrimStart('v','V')
-    $latestClean = $latestTag.TrimStart('v','V')
+    $curClean = $CurrentVersion.TrimStart('v','V').TrimStart('.')
+    $latestClean = $latestTag.TrimStart('v','V').TrimStart('.')
     $curParsed = [System.Version]::Parse($curClean)
     $latestParsed = [System.Version]::Parse($latestClean)
 
@@ -42,14 +42,14 @@ try {
     if ($doScriptUpdate) {
         $asset = $null
         foreach ($a in $release.assets) {
-            if ($a.name -like "*Windows.zip") {
+            if ($a.name -like "*All-Platforms.zip" -or $a.name -like "*Windows.zip") {
                 $asset = $a
                 break
             }
         }
 
         if (-not $asset) {
-            Write-Host "  [Error] Could not find Windows package in release assets." -ForegroundColor Red
+            Write-Host "  [Error] Could not find release package in release assets." -ForegroundColor Red
         } else {
             $tempZip = Join-Path $env:TEMP ("agy_update_" + $latestTag + ".zip")
             $tempExtract = Join-Path $env:TEMP ("agy_extract_" + [Guid]::NewGuid().ToString())
@@ -59,7 +59,11 @@ try {
             Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force
             Remove-Item $tempZip -Force
             Write-Host "  Updating scripts (credentials and bin remain safe)..." -ForegroundColor Cyan
-            foreach ($item in (Get-ChildItem -Path $tempExtract)) {
+            $sourceDir = $tempExtract
+            if (Test-Path (Join-Path $tempExtract "Windows")) {
+                $sourceDir = Join-Path $tempExtract "Windows"
+            }
+            foreach ($item in (Get-ChildItem -Path $sourceDir)) {
                 if ($item.Name -ne "bin" -and $item.Name -ne "data") {
                     Copy-Item -Path $item.FullName -Destination $WinDir -Recurse -Force
                 }

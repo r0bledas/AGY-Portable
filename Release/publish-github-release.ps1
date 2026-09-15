@@ -1,7 +1,7 @@
 # Publish GitHub Release Script
 param(
-    [string]$Tag = "v1.5.0",
-    [string]$Title = "AGY-Portable v1.5.0 - Dual-Track Updates (Launcher Scripts & Core CLI Engine)",
+    [string]$Tag = "v1.6.0",
+    [string]$Title = "AGI Portable v1.6.0",
     [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
 )
 
@@ -24,20 +24,17 @@ $headers = @{
 Write-Host "Creating GitHub Release $Tag on $repo..." -ForegroundColor Cyan
 
 $releaseBody = @"
-## Google Antigravity (AGY) - Portable Edition $Tag
+# Unified All-Platforms Release
 
-A fully self-contained, USB-portable distribution of the Google Antigravity CLI (agy) for Windows, macOS, and Linux.
+A fully self-contained, USB-portable distribution of the Google Antigravity CLI (agy) for Windows, macOS, and Linux in a single unified package.
 
-### Release Assets Included
-- **AGY-Portable-$Tag-All-Platforms.zip**: Multi-platform USB distribution for Windows, macOS, and Linux.
-- **AGY-Portable-$Tag-Windows.zip**: Standalone Windows release (All-in-one agy.cmd and agy-danger.cmd runners).
-- **AGY-Portable-$Tag-macOS.zip**: Standalone macOS release (All-in-one agy.command launcher).
-- **AGY-Portable-$Tag-Linux.zip**: Standalone Linux release (All-in-one agy.sh launcher).
+### Release Package Included
+- **AGY-Portable-$Tag-All-Platforms.zip**: Complete cross-platform USB distribution for Windows, macOS, and Linux.
 
 ### Highlights
+- Single unified release archive: all platforms (Windows, macOS, Linux) are bundled into one package.
 - Single USB drive shares credentials and conversation history across Windows, macOS, and Linux.
 - Dual-track optional updater: updates launcher scripts from GitHub and core CLI engine from Google independently.
-- Interactive terminal menu, Google binary downloader, and 1-click credential sync across Windows, macOS, and Linux.
 - Windows includes both standard user (agy.cmd) and auto-approved permissions (agy-danger.cmd) runners.
 - Zero host system pollution; zero-trace temporary runner cleans up on exit.
 "@

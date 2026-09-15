@@ -6,7 +6,7 @@ setlocal EnableDelayedExpansion
 :: Double-click in Windows Explorer or run in CMD / PowerShell: agy.cmd [/help]
 :: ==============================================================================
 
-set "CURRENT_VERSION=v1.5.0"
+set "CURRENT_VERSION=v1.6.0"
 set "GITHUB_REPO=r0bledas/AGY-Portable"
 
 set "WIN_DIR=%~dp0"
