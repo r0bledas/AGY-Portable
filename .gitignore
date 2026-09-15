@@ -1,4 +1,4 @@
-﻿# Isolated runtime data, tokens, and history (CRITICAL: NEVER COMMIT CREDENTIALS)
+# Isolated runtime data, tokens, and history (CRITICAL: NEVER COMMIT CREDENTIALS)
 data/
 jetski-standalone-oauth-token
 *.token
@@ -19,3 +19,7 @@ Linux/bin/agy
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Local release build artifacts (releases are hosted directly on GitHub Releases)
+Release/
+*.zip

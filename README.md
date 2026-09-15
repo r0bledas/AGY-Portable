@@ -27,12 +27,6 @@ AGY-Portable/
 │   ├── agy.sh               # All-in-one launcher: Terminal menu + CLI + Auto-downloader
 │   └── bin/agy              # Linux CLI binary (ignored by git)
 │
-├── Release/                 # Automated release packages and publisher scripts
-│   ├── AGY-Portable-vX.X.X-All-Platforms.zip
-│   ├── build-release.ps1
-│   ├── publish-github-release.ps1
-│   └── README.md
-│
 ├── data/                    # Shared portable storage (never touches host PC, ignored by git)
 │   ├── home/
 │   │   └── .gemini/         # Shared OAuth tokens, SQLite DBs, conversation logs, skills
