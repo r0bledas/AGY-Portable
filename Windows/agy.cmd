@@ -6,7 +6,7 @@ setlocal EnableDelayedExpansion
 :: Double-click in Windows Explorer or run in CMD / PowerShell: agy.cmd [/help]
 :: ==============================================================================
 
-set "CURRENT_VERSION=v1.4.0"
+set "CURRENT_VERSION=v1.5.0"
 set "GITHUB_REPO=r0bledas/AGY-Portable"
 
 set "WIN_DIR=%~dp0"
@@ -202,18 +202,26 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$binDir = '%BIN_DIR%';" ^
     "$targetExe = '%AGY_BIN%';" ^
     "$manifestUrl = 'https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/windows_amd64.json';" ^
-    "$fallbackUrl = 'https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.2-6061403484848128/windows-x64/cli_windows_x64.zip';" ^
+    "$fallbackUrl = 'https://storage.googleapis.com/antigravity-public/antigravity-cli/1.2.3-5101874907578368/windows-x64/cli_windows_x64.exe';" ^
     "Write-Host 'Fetching release metadata from Google...';" ^
     "try { $dlUrl = (Invoke-RestMethod -Uri $manifestUrl -UseBasicParsing).url } catch { $dlUrl = $fallbackUrl };" ^
     "if (-not $dlUrl) { $dlUrl = $fallbackUrl };" ^
     "Write-Host ('Download URL: ' + $dlUrl);" ^
-    "$zipPath = Join-Path $binDir 'agy_win.zip';" ^
-    "Write-Host 'Downloading (~50 MB compressed, ~190 MB uncompressed)...' -ForegroundColor Cyan;" ^
-    "Invoke-WebRequest -Uri $dlUrl -OutFile $zipPath -UseBasicParsing;" ^
-    "Write-Host 'Extracting archive into bin...' -ForegroundColor Cyan;" ^
-    "Expand-Archive -Path $zipPath -DestinationPath $binDir -Force;" ^
-    "Remove-Item $zipPath -Force;" ^
-    "if (Test-Path (Join-Path $binDir 'antigravity.exe')) { Move-Item -Path (Join-Path $binDir 'antigravity.exe') -Destination $targetExe -Force };" ^
+    "$wc = New-Object System.Net.WebClient;" ^
+    "if ($dlUrl.EndsWith('.exe')) {" ^
+    "    $tmpExe = Join-Path $binDir 'agy_new.exe';" ^
+    "    Write-Host 'Downloading binary (~190 MB)...' -ForegroundColor Cyan;" ^
+    "    $wc.DownloadFile($dlUrl, $tmpExe);" ^
+    "    Move-Item -Path $tmpExe -Destination $targetExe -Force;" ^
+    "} else {" ^
+    "    $zipPath = Join-Path $binDir 'agy_win.zip';" ^
+    "    Write-Host 'Downloading (~50 MB compressed, ~190 MB uncompressed)...' -ForegroundColor Cyan;" ^
+    "    $wc.DownloadFile($dlUrl, $zipPath);" ^
+    "    Write-Host 'Extracting archive into bin...' -ForegroundColor Cyan;" ^
+    "    Expand-Archive -Path $zipPath -DestinationPath $binDir -Force;" ^
+    "    Remove-Item $zipPath -Force;" ^
+    "    if (Test-Path (Join-Path $binDir 'antigravity.exe')) { Move-Item -Path (Join-Path $binDir 'antigravity.exe') -Destination $targetExe -Force };" ^
+    "};" ^
     "Unblock-File -Path (Join-Path $binDir '*') -ErrorAction SilentlyContinue;" ^
     "Write-Host '[Success] Antigravity CLI installed successfully in bin\agy.exe!' -ForegroundColor Green;"
 call :cleanup_runner
@@ -223,49 +231,11 @@ goto :eof
 echo ======================================================
 echo                 Checking for Updates
 echo ======================================================
-echo  Current Version: %CURRENT_VERSION%
-echo  Repository:      https://github.com/%GITHUB_REPO%
+echo  Launcher Version: %CURRENT_VERSION%
+echo  Repository:       https://github.com/%GITHUB_REPO%
 echo.
-echo Fetching latest release information from GitHub...
-powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "$repo = '%GITHUB_REPO%';" ^
-    "$currentVer = '%CURRENT_VERSION%';" ^
-    "$apiUrl = 'https://api.github.com/repos/' + $repo + '/releases/latest';" ^
-    "$winDir = '%WIN_DIR%';" ^
-    "try {" ^
-    "    $release = Invoke-RestMethod -Uri $apiUrl -UserAgent 'AGY-Portable' -UseBasicParsing;" ^
-    "    $latestTag = $release.tag_name;" ^
-    "    Write-Host ('Latest Version on GitHub: ' + $latestTag) -ForegroundColor Cyan;" ^
-    "    if ($latestTag -eq $currentVer) {" ^
-    "        Write-Host '[Up to Date] You are running the latest version of AGY-Portable!' -ForegroundColor Green;" ^
-    "        $reinstall = Read-Host 'Would you like to re-download/repair the latest scripts anyway? [y/N]';" ^
-    "        if ($reinstall -ne 'y' -and $reinstall -ne 'Y') { exit 0 };" ^
-    "    } else {" ^
-    "        Write-Host ('[Update Available] A new release (' + $latestTag + ') is available!') -ForegroundColor Yellow;" ^
-    "        $confirm = Read-Host 'Proceed with update? User credentials and data will be preserved. [Y/n]';" ^
-    "        if ($confirm -eq 'n' -or $confirm -eq 'N') { Write-Host 'Update cancelled.'; exit 0 };" ^
-    "    };" ^
-    "    $asset = $null;" ^
-    "    foreach ($a in $release.assets) { if ($a.name -like '*Windows.zip') { $asset = $a; break } };" ^
-    "    if (-not $asset) { Write-Host '[Error] Could not find Windows release package in release assets.' -ForegroundColor Red; exit 1 };" ^
-    "    $tempZip = Join-Path $env:TEMP ('agy_update_' + $latestTag + '.zip');" ^
-    "    $tempExtract = Join-Path $env:TEMP ('agy_extract_' + [Guid]::NewGuid().ToString());" ^
-    "    Write-Host ('Downloading ' + $asset.name + '...') -ForegroundColor Cyan;" ^
-    "    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tempZip -UserAgent 'AGY-Portable' -UseBasicParsing;" ^
-    "    Write-Host 'Extracting update package...' -ForegroundColor Cyan;" ^
-    "    Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force;" ^
-    "    Remove-Item $tempZip -Force;" ^
-    "    Write-Host 'Updating launcher scripts (user data and bin remain untouched)...' -ForegroundColor Cyan;" ^
-    "    foreach ($item in (Get-ChildItem -Path $tempExtract)) {" ^
-    "        if ($item.Name -ne 'bin' -and $item.Name -ne 'data') {" ^
-    "            Copy-Item -Path $item.FullName -Destination $winDir -Recurse -Force;" ^
-    "        }" ^
-    "    };" ^
-    "    Remove-Item $tempExtract -Recurse -Force;" ^
-    "    Write-Host ('[Success] Updated to ' + $latestTag + '! All credentials, conversations, and data remain safe.') -ForegroundColor Green;" ^
-    "} catch {" ^
-    "    Write-Host ('[Error] Failed to check for updates: ' + $_) -ForegroundColor Red;" ^
-    "}"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%WIN_DIR%\updater.ps1" -Repo "%GITHUB_REPO%" -CurrentVersion "%CURRENT_VERSION%" -WinDir "%WIN_DIR%" -BinDir "%BIN_DIR%" -TargetExe "%AGY_BIN%"
+call :cleanup_runner
 goto :eof
 
 :show_status
@@ -385,7 +355,7 @@ echo Usage:   agy.cmd [command] [options]
 echo.
 echo Slash Commands:
 echo   /help         Show this help screen with all available commands
-echo   /update       Check GitHub for script updates (preserves data and tokens)
+echo   /update       Check for updates (GitHub scripts and Google CLI engine)
 echo   /download     Download official AGY binary directly from Google
 echo   /status       Display binary readiness, OAuth login status, and version
 echo   /import       Import host PC credentials (%%USERPROFILE%%\.gemini) to USB

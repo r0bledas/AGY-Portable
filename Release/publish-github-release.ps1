@@ -1,7 +1,7 @@
 # Publish GitHub Release Script
 param(
-    [string]$Tag = "v1.4.0",
-    [string]$Title = "AGY-Portable v1.4.0 - Auto-Updater & Streamlined Release",
+    [string]$Tag = "v1.5.0",
+    [string]$Title = "AGY-Portable v1.5.0 - Dual-Track Updates (Launcher Scripts & Core CLI Engine)",
     [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
 )
 
@@ -36,6 +36,7 @@ A fully self-contained, USB-portable distribution of the Google Antigravity CLI 
 
 ### Highlights
 - Single USB drive shares credentials and conversation history across Windows, macOS, and Linux.
+- Dual-track optional updater: updates launcher scripts from GitHub and core CLI engine from Google independently.
 - Interactive terminal menu, Google binary downloader, and 1-click credential sync across Windows, macOS, and Linux.
 - Windows includes both standard user (agy.cmd) and auto-approved permissions (agy-danger.cmd) runners.
 - Zero host system pollution; zero-trace temporary runner cleans up on exit.

@@ -27,10 +27,10 @@ AGY-Portable/
 │   └── bin/agy              # Linux CLI binary (ignored by git)
 │
 ├── Release/                 # Automated release packages and publisher scripts
-│   ├── AGY-Portable-v1.4.0-All-Platforms.zip
-│   ├── AGY-Portable-v1.4.0-Windows.zip
-│   ├── AGY-Portable-v1.4.0-macOS.zip
-│   ├── AGY-Portable-v1.4.0-Linux.zip
+│   ├── AGY-Portable-v1.5.0-All-Platforms.zip
+│   ├── AGY-Portable-v1.5.0-Windows.zip
+│   ├── AGY-Portable-v1.5.0-macOS.zip
+│   ├── AGY-Portable-v1.5.0-Linux.zip
 │   ├── build-release.ps1
 │   ├── publish-github-release.ps1
 │   └── README.md
@@ -62,7 +62,7 @@ Inside `Windows/`, two native command launchers provide complete control without
      * `Windows\agy.cmd /help` - Show all available commands
      * `Windows\agy.cmd /danger` - Launch in dangerously-skip-permissions mode
      * `Windows\agy.cmd /download` - Download official Windows binary directly from Google
-     * `Windows\agy.cmd /update` - Check GitHub for updates (preserves data and logins)
+     * `Windows\agy.cmd /update` - Check for updates (dual-track: GitHub launcher scripts and Google core CLI binary)
      * `Windows\agy.cmd /status` - Display binary readiness and OAuth login status
      * `Windows\agy.cmd /import` - Copy credentials from host PC (%USERPROFILE%\.gemini) to USB
      * `Windows\agy.cmd /export` - Export USB credentials to host PC (%USERPROFILE%\.gemini)
