@@ -28,7 +28,7 @@ AGY-Portable/
 │   └── bin/agy              # Linux CLI binary (ignored by git)
 │
 ├── Release/                 # Automated release packages and publisher scripts
-│   ├── AGY-Portable-v1.6.0-All-Platforms.zip
+│   ├── AGY-Portable-vX.X.X-All-Platforms.zip
 │   ├── build-release.ps1
 │   ├── publish-github-release.ps1
 │   └── README.md
