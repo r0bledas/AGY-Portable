@@ -1,7 +1,7 @@
 # Publish GitHub Release Script
 param(
-    [string]$Tag = "v1.1.0",
-    [string]$Title = "AGY-Portable v1.1.0 - Windows CLI Modernization & Admin Hub",
+    [string]$Tag = "v1.4.0",
+    [string]$Title = "AGY-Portable v1.4.0 - Auto-Updater & Streamlined Release",
     [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
 )
 
@@ -61,8 +61,8 @@ try {
     $uploadUrlBase = $release.upload_url -replace '\{\?name,label\}', ''
 }
 
-# Upload all zip files in Release folder
-$zipFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*.zip"
+# Upload all zip files in Release folder for current version tag
+$zipFiles = Get-ChildItem -Path $PSScriptRoot -Filter "*$Tag*.zip"
 foreach ($z in $zipFiles) {
     # Check if asset already exists in release and delete to overwrite
     $existingAsset = $release.assets | Where-Object { $_.name -eq $z.Name }

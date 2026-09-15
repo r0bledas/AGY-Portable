@@ -6,6 +6,9 @@ setlocal EnableDelayedExpansion
 :: Double-click in Windows Explorer or run in CMD / PowerShell: agy.cmd [/help]
 :: ==============================================================================
 
+set "CURRENT_VERSION=v1.4.0"
+set "GITHUB_REPO=r0bledas/AGY-Portable"
+
 set "WIN_DIR=%~dp0"
 if "%WIN_DIR:~-1%"=="\" set "WIN_DIR=%WIN_DIR:~0,-1%"
 
@@ -47,10 +50,15 @@ if /i "%ARG1%"=="help" goto :show_help
 if /i "%ARG1%"=="-h" goto :show_help
 if /i "%ARG1%"=="--help" goto :show_help
 
-if /i "%ARG1%"=="/download" goto :do_download
-if /i "%ARG1%"=="download" goto :do_download
-if /i "%ARG1%"=="/update" goto :do_download
-if /i "%ARG1%"=="update" goto :do_download
+if /i "%ARG1%"=="/update" goto :cmd_update
+if /i "%ARG1%"=="update" goto :cmd_update
+if /i "%ARG1%"=="/check-updates" goto :cmd_update
+if /i "%ARG1%"=="check-updates" goto :cmd_update
+
+if /i "%ARG1%"=="/download" goto :do_download_bin
+if /i "%ARG1%"=="download" goto :do_download_bin
+if /i "%ARG1%"=="/download-bin" goto :do_download_bin
+if /i "%ARG1%"=="download-bin" goto :do_download_bin
 
 if /i "%ARG1%"=="/status" goto :cmd_status
 if /i "%ARG1%"=="status" goto :cmd_status
@@ -126,7 +134,7 @@ if exist "%HOST_AGY%" (
 echo The binary can be downloaded directly from Google servers (~50 MB).
 set /p "DL_CONFIRM=Download now? [Y/n]: "
 if /i not "!DL_CONFIRM!"=="n" (
-    call :do_download
+    call :do_download_bin
     goto :eof
 )
 
@@ -185,7 +193,7 @@ if exist "%TEMP_RUN_DIR%" (
 set "RUNNER_READY="
 goto :eof
 
-:do_download
+:do_download_bin
 echo ======================================================
 echo        Downloading Antigravity CLI for Windows
 echo ======================================================
@@ -211,17 +219,67 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 call :cleanup_runner
 goto :eof
 
+:check_updates
+echo ======================================================
+echo                 Checking for Updates
+echo ======================================================
+echo  Current Version: %CURRENT_VERSION%
+echo  Repository:      https://github.com/%GITHUB_REPO%
+echo.
+echo Fetching latest release information from GitHub...
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "$repo = '%GITHUB_REPO%';" ^
+    "$currentVer = '%CURRENT_VERSION%';" ^
+    "$apiUrl = 'https://api.github.com/repos/' + $repo + '/releases/latest';" ^
+    "$winDir = '%WIN_DIR%';" ^
+    "try {" ^
+    "    $release = Invoke-RestMethod -Uri $apiUrl -UserAgent 'AGY-Portable' -UseBasicParsing;" ^
+    "    $latestTag = $release.tag_name;" ^
+    "    Write-Host ('Latest Version on GitHub: ' + $latestTag) -ForegroundColor Cyan;" ^
+    "    if ($latestTag -eq $currentVer) {" ^
+    "        Write-Host '[Up to Date] You are running the latest version of AGY-Portable!' -ForegroundColor Green;" ^
+    "        $reinstall = Read-Host 'Would you like to re-download/repair the latest scripts anyway? [y/N]';" ^
+    "        if ($reinstall -ne 'y' -and $reinstall -ne 'Y') { exit 0 };" ^
+    "    } else {" ^
+    "        Write-Host ('[Update Available] A new release (' + $latestTag + ') is available!') -ForegroundColor Yellow;" ^
+    "        $confirm = Read-Host 'Proceed with update? User credentials and data will be preserved. [Y/n]';" ^
+    "        if ($confirm -eq 'n' -or $confirm -eq 'N') { Write-Host 'Update cancelled.'; exit 0 };" ^
+    "    };" ^
+    "    $asset = $null;" ^
+    "    foreach ($a in $release.assets) { if ($a.name -like '*Windows.zip') { $asset = $a; break } };" ^
+    "    if (-not $asset) { Write-Host '[Error] Could not find Windows release package in release assets.' -ForegroundColor Red; exit 1 };" ^
+    "    $tempZip = Join-Path $env:TEMP ('agy_update_' + $latestTag + '.zip');" ^
+    "    $tempExtract = Join-Path $env:TEMP ('agy_extract_' + [Guid]::NewGuid().ToString());" ^
+    "    Write-Host ('Downloading ' + $asset.name + '...') -ForegroundColor Cyan;" ^
+    "    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tempZip -UserAgent 'AGY-Portable' -UseBasicParsing;" ^
+    "    Write-Host 'Extracting update package...' -ForegroundColor Cyan;" ^
+    "    Expand-Archive -Path $tempZip -DestinationPath $tempExtract -Force;" ^
+    "    Remove-Item $tempZip -Force;" ^
+    "    Write-Host 'Updating launcher scripts (user data and bin remain untouched)...' -ForegroundColor Cyan;" ^
+    "    foreach ($item in (Get-ChildItem -Path $tempExtract)) {" ^
+    "        if ($item.Name -ne 'bin' -and $item.Name -ne 'data') {" ^
+    "            Copy-Item -Path $item.FullName -Destination $winDir -Recurse -Force;" ^
+    "        }" ^
+    "    };" ^
+    "    Remove-Item $tempExtract -Recurse -Force;" ^
+    "    Write-Host ('[Success] Updated to ' + $latestTag + '! All credentials, conversations, and data remain safe.') -ForegroundColor Green;" ^
+    "} catch {" ^
+    "    Write-Host ('[Error] Failed to check for updates: ' + $_) -ForegroundColor Red;" ^
+    "}"
+goto :eof
+
 :show_status
 echo ======================================================
 echo        Google Antigravity (AGY) - Windows Hub
 echo ======================================================
+echo  Version:  %CURRENT_VERSION%
 echo  Location: %WIN_DIR%
 echo  Data Dir: %DATA_ROOT%
 
 if exist "%AGY_BIN%" (
     echo  CLI Core: Ready [%AGY_BIN%]
 ) else (
-    echo  CLI Core: MISSING [Use option 7 or /download to install]
+    echo  CLI Core: MISSING [Use /download to install or option 7]
 )
 
 if exist "%PORTABLE_TOKEN%" (
@@ -322,13 +380,14 @@ goto :eof
 echo =================================================================
 echo   Google Antigravity (AGY) - Windows Portable Command Reference
 echo =================================================================
-echo Usage: agy.cmd [command] [options]
+echo Version: %CURRENT_VERSION%
+echo Usage:   agy.cmd [command] [options]
 echo.
 echo Slash Commands:
 echo   /help         Show this help screen with all available commands
+echo   /update       Check GitHub for script updates (preserves data and tokens)
 echo   /download     Download official AGY binary directly from Google
-echo   /update       Update AGY binary to the latest version from Google
-echo   /status       Display binary readiness and OAuth login status
+echo   /status       Display binary readiness, OAuth login status, and version
 echo   /import       Import host PC credentials (%%USERPROFILE%%\.gemini) to USB
 echo   /export       Export USB credentials to host PC (%%USERPROFILE%%\.gemini)
 echo   /login        Sign in via Google OAuth in your default browser
@@ -348,6 +407,10 @@ goto :eof
 
 :cmd_status
 call :show_status
+goto :eof
+
+:cmd_update
+call :check_updates
 goto :eof
 
 :cmd_import
@@ -380,7 +443,7 @@ echo  [3] Import Login from this PC (/import)
 echo  [4] Export USB Login to this PC (/export)
 echo  [5] Sign In via Browser (/login)
 echo  [6] Clear USB Login (/clear)
-echo  [7] Download / Update Core Binary (/download)
+echo  [7] Check for updates (/update)
 echo  [8] Show Command Help (/help)
 echo  [0] Exit
 echo ------------------------------------------------------
@@ -428,7 +491,7 @@ if "%OPT%"=="6" (
 )
 if "%OPT%"=="7" (
     echo.
-    call :do_download
+    call :check_updates
     echo.
     pause
     goto :do_menu
