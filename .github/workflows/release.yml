@@ -1,0 +1,48 @@
+name: Build and Publish Release Archives
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.6.0)'
+        required: true
+        default: 'v1.6.0'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build and verify POSIX-preserving ZIP and TAR.GZ archives
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+          chmod +x Release/build-release.sh
+          ./Release/build-release.sh "$TAG"
+
+      - name: Upload Release Assets to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ZIP_FILE="Release/AGY-Portable-${TAG}-All-Platforms.zip"
+          TAR_FILE="Release/AGY-Portable-${TAG}-All-Platforms.tar.gz"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP_FILE" "$TAR_FILE" --clobber
+          else
+            gh release create "$TAG" "$ZIP_FILE" "$TAR_FILE" \
+              --title "AGY Portable ${TAG}" \
+              --generate-notes
+          fi

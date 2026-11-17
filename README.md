@@ -97,19 +97,35 @@ Any standard Antigravity CLI command or flag can be passed directly through the 
 * **Zero-Trace Temp Runner**: `agy.cmd` loads the core engine into a temporary sandbox with a progress indicator to bypass USB drive execution policies, automatically purging upon exit.
 
 ### macOS
-* **Gatekeeper Notice**: When downloaded from a web browser, macOS Gatekeeper may quarantine the scripts. If macOS blocks opening `agy.command`, run:
+* **Zero-Permission Quick Launch (Always Works)**: Calling `bash` directly bypasses missing executable bits (`0644`) and USB `noexec` mounts:
   ```bash
-  xattr -cr /Volumes/<YourUSB>/AGY-Portable
+  bash macOS/agy.command /help
+  bash macOS/agy.command /download
+  bash macOS/agy.command
   ```
-  See `macOS/File Not Opening.txt` for details.
+* **Gatekeeper & Permissions One-Liner (Enables Finder Double-Click)**: Browser-downloaded archives receive `com.apple.quarantine`, and FAT/exFAT USB drives or Windows-built ZIP tools may strip executable mode bits. Fix both at once from the `AGY-Portable` root:
+  ```bash
+  xattr -cr . && chmod +x macOS/*.command Linux/*.sh
+  ```
+  See `macOS/File Not Opening.txt` for step-by-step instructions.
 * **Finder Launch**: Double-click `agy.command` or `agy-danger.command` in Finder to launch.
+* **Do Not Use `sudo`**: Never run `sudo ./agy.command`. On a non-executable file, `sudo` prints a misleading `sudo: command not found` error, and running as `root` changes `$HOME` and prevents importing your user credentials.
 
 ### Linux
+* **Zero-Permission Quick Launch**: Works immediately even without `+x` permissions:
+  ```bash
+  bash Linux/agy.sh /help
+  bash Linux/agy.sh /download
+  bash Linux/agy.sh
+  ```
 * **Terminal Launch**: Run `./Linux/agy.sh` or `./Linux/agy-danger.sh`.
 * **Execution Permissions**: If needed, grant execution permissions:
   ```bash
   chmod +x Linux/agy.sh Linux/agy-danger.sh
   ```
+
+### First-Run Binary Download
+* The release archive (`~18 KB`) contains only the portable launchers and directory structure (no 200 MB proprietary binaries bundled). On first launch, run `<launcher> /download` (or follow the interactive prompt) with an active internet connection to fetch the official Google CLI binary for your OS, or let the launcher copy an existing local `agy` installation onto the USB drive.
 
 ---
 

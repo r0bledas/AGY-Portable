@@ -1,64 +1,56 @@
-﻿# macOS Troubleshooting: "File Not Opening" or Gatekeeper Warning
+﻿# macOS Troubleshooting: "File Not Opening", "Permission Denied", or Gatekeeper Warning
 
-If macOS prevents you from opening agy.command or displays:
-"Apple could not verify agy.command is free of malware..."
-or "agy.command cannot be opened because it is from an unidentified developer"
+If macOS prevents you from opening `agy.command` or displays:
+- `zsh: permission denied: ./agy.command`
+- `sudo: ./agy.command: command not found` (caused by missing `+x` permission — **never use `sudo`**, as it breaks portable `$HOME` and credential import!)
+- `"The file 'agy.command' could not be executed because you do not have appropriate access privileges"`
+- `"Apple could not verify agy.command is free of malware..."`
 
-Here are the simple ways to open and run it:
-
----
-
-## Method 1: Right-Click to Open (Fastest - No Terminal Required)
-
-1. In Finder, Right-Click (or hold the Control key and Click) on "agy.command".
-2. Select "Open" from the menu.
-3. A security dialog will appear with an "Open" button. Click "Open".
-
-macOS will remember this decision and allow agy.command to open normally with a double-click in the future.
+Use any of the fixes below:
 
 ---
 
-## Method 2: Drag and Drop into Terminal
+## Method 0: Zero-Permission Escape Hatch (Instant — Works Every Time)
 
-1. Open the Terminal app (Press Command + Space, type "Terminal", and press Enter).
-2. Drag and drop "agy.command" from Finder directly into the Terminal window.
-   (Terminal will automatically fill in the full file path).
-3. Press Enter.
+Passing the script directly to `bash` ignores missing executable (`+x`) permissions entirely, even on `0644` files or `noexec` USB drives:
 
-The launcher will start immediately.
+```bash
+bash macOS/agy.command /help
+bash macOS/agy.command /download
+bash macOS/agy.command
+```
 
----
-
-## Method 3: Remove Quarantine on the Entire Folder (Permanent Fix)
-
-When downloading zip files from GitHub using a web browser, macOS attaches a security quarantine flag to every file extracted. You can remove this flag with one command:
-
-1. Open Terminal.
-2. Type:
-   xattr -cr 
-   (include a space after -cr, do not press Enter yet).
-3. Drag and drop the "macOS" folder (or the entire "AGY-Portable" USB folder) into the Terminal window.
-4. Press Enter.
-
-All quarantine flags are stripped and every script will run with a standard double-click.
+Once `bash macOS/agy.command` runs, it automatically repairs `+x` permissions and strips Gatekeeper quarantine on `agy.command`, `agy-danger.command`, and `Linux/agy.sh` for future runs!
 
 ---
 
-## Method 4: If you see "Permission Denied"
+## Method 1: One-Line Permanent Fix (Fixes Finder Double-Click & `./agy.command`)
 
-If your USB drive's filesystem stripped executable permissions:
+When downloading ZIP archives from a web browser or copying across FAT32/exFAT USB drives, macOS attaches a `com.apple.quarantine` flag and may strip the Unix executable (`+x`) bit. Fix both in one command:
 
-1. Open Terminal.
-2. Type:
-   chmod +x 
-   (with a space at the end).
-3. Drag "agy.command" into the Terminal window.
-4. Press Enter.
+1. Open **Terminal**.
+2. Type `cd ` (with a space), drag the `AGY-Portable` folder from Finder into Terminal, and press **Enter**.
+3. Run:
+   ```bash
+   xattr -cr . && chmod +x macOS/*.command Linux/*.sh
+   ```
+
+Both `./macOS/agy.command` in Terminal and double-clicking `agy.command` in Finder will now work permanently.
 
 ---
 
-## Method 5: If TextEdit Opens Instead of Terminal
+## Method 2: Right-Click to Open in Finder (No Terminal Required if `+x` is set)
 
-1. Right-Click on "agy.command" in Finder.
-2. Choose "Open With" -> "Terminal.app".
-3. To make it permanent: Right-Click -> "Get Info" -> under "Open with:", select "Terminal" -> click "Change All...".
+1. In Finder, **Right-Click** (or Control-Click) on `agy.command`.
+2. Select **Open** from the menu.
+3. Click **Open** in the confirmation dialog.
+
+macOS will remember this decision and allow `agy.command` to open normally with a double-click in the future.
+
+---
+
+## Method 3: If TextEdit Opens Instead of Terminal
+
+1. Right-Click on `agy.command` in Finder.
+2. Choose **Open With** -> **Terminal.app**.
+3. To make it permanent: Right-Click -> **Get Info** -> under **Open with:**, select **Terminal** -> click **Change All...**.

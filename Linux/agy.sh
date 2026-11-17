@@ -7,6 +7,16 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
 
+# Self-repair executable bits on sibling launchers
+chmod +x "$SCRIPT_DIR/agy.sh" "$SCRIPT_DIR/agy-danger.sh" "$SCRIPT_DIR/../macOS/agy.command" "$SCRIPT_DIR/../macOS/agy-danger.command" 2>/dev/null || true
+
+# Detect if accidentally invoked via sudo and resolve the real user's HOME for credential import
+REAL_HOME="$HOME"
+if [ "$(id -u)" -eq 0 ] && [ -n "$SUDO_USER" ]; then
+    echo "[Warning] Running with 'sudo' is not recommended — AGY-Portable runs entirely in user space."
+    REAL_HOME=$(eval echo "~$SUDO_USER")
+fi
+
 if [ -d "$SCRIPT_DIR/../data" ] || [ -f "$SCRIPT_DIR/../README.md" ] || [ -d "$SCRIPT_DIR/../Windows" ]; then
     DATA_ROOT="$SCRIPT_DIR/../data"
 else
@@ -16,7 +26,7 @@ fi
 PORTABLE_HOME="$DATA_ROOT/home"
 PORTABLE_GEMINI="$PORTABLE_HOME/.gemini"
 PORTABLE_TOKEN="$PORTABLE_GEMINI/jetski-standalone-oauth-token"
-HOST_TOKEN="$HOME/.gemini/jetski-standalone-oauth-token"
+HOST_TOKEN="$REAL_HOME/.gemini/jetski-standalone-oauth-token"
 BIN_DIR="$SCRIPT_DIR/bin"
 AGY_BIN="$BIN_DIR/agy"
 
