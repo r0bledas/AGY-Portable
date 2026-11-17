@@ -30,6 +30,7 @@ AGY-Portable/
 │   └── bin/agy              # Linux CLI binary (ignored by git)
 │
 ├── data/                    # Shared portable storage (never touches host PC, ignored by git)
+│   ├── accounts/            # Named account profiles (token per profile + .active marker)
 │   ├── home/
 │   │   └── .gemini/         # Shared OAuth tokens, SQLite DBs, conversation logs, skills
 │   └── AppData/             # Local and roaming caches
@@ -69,13 +70,43 @@ All platforms share the exact same commands, arguments, and slash commands. Repl
 | `<launcher> /danger` | Launch hub or execute command with `--dangerously-skip-permissions` |
 | `<launcher> /download` | Download official AGY binary directly from Google servers |
 | `<launcher> /update` | Check for updates (GitHub scripts and/or Google core CLI engine) |
-| `<launcher> /status` | Display binary readiness, OAuth credentials status, and active mode |
-| `<launcher> /import` | Import host machine credentials (`~/.gemini`) into portable USB storage |
+| `<launcher> /status` | Display binary readiness, OAuth credentials status, and active account |
+| `<launcher> /import [name]` | Import host machine credentials (`~/.gemini`) as a USB account (default name: `host`) |
 | `<launcher> /export` | Export USB credentials to host machine (`~/.gemini`) |
-| `<launcher> /login` | Sign in via Google OAuth in your default browser |
-| `<launcher> /clear` | Wipe login token from USB for safe lending |
+| `<launcher> /login` | Sign in via Google OAuth in your default browser (re-signs the active account) |
+| `<launcher> /clear` | Sign out of the active account (saved accounts are kept) |
+| `<launcher> /clear all` | Wipe ALL credentials and saved accounts for safe lending |
+| `<launcher> /account list` | List saved accounts (`*` marks the active one) |
+| `<launcher> /account use <name>` | Switch the active account (instant on Windows) |
+| `<launcher> /account add <name>` | Sign in with a new account and save it as a profile |
+| `<launcher> /account save <name>` | Save the current login as a profile |
+| `<launcher> /account status` | Show the account currently signed in |
+| `<launcher> /account remove <name>` | Delete a saved (inactive) account |
+| `<launcher> /account rename <old> <new>` | Rename a saved account |
 | `<launcher> /shell` | Open an isolated command shell with portable paths preconfigured |
 | `<launcher> /menu` | Open the interactive terminal menu hub |
+
+### Multiple Accounts
+
+AGY-Portable keeps named credential profiles under `data/accounts/<name>/`:
+
+- `credential.json` - the Windows Credential Manager blob (`gemini:antigravity`), which is what the AGY CLI actually reads on Windows.
+- `token` - the portable OAuth token file, used on macOS/Linux.
+- `data/accounts/.active` - the profile currently loaded.
+
+On Windows the CLI stores its login in the Windows Credential Manager, so
+`/account use`, `/account save`, and `/account status` operate on that vault
+through `Windows/accounts.ps1`. Switching accounts is instant - no browser, no
+re-login. On macOS/Linux the token file is the credential and the same commands
+swap it in place.
+
+Use `/account add` or `/account save` to create profiles and `/account use`
+to switch between them. Conversations, settings, and skills remain shared
+across all accounts. Profile names may contain letters, digits, `-` and `_`.
+
+> `data/accounts/` is excluded by `.gitignore`, so credentials are never
+> committed. Each Windows user has their own credential vault, so profiles
+> created on one machine are portable to another via the USB drive.
 
 ### Direct CLI Pass-Through
 
@@ -132,6 +163,7 @@ Any standard Antigravity CLI command or flag can be passed directly through the 
 ## Security & Privacy
 
 * **Zero Host Pollution**: All credentials, SQLite conversation databases, logs, and skills live strictly inside `data/` on the USB drive.
+* **Per-Profile Credentials**: Saved account tokens live under `data/accounts/` (excluded by `.gitignore`) and are stored with restrictive permissions (`chmod 600`) where the OS allows. Use `/clear all` before lending the drive.
 * **Cross-Platform Sync**: Because SQLite databases and JSON OAuth tokens are cross-platform, a session started on Windows can be resumed on macOS or Linux using the same USB drive.
 * **No Administrator Rights Required**: Credentials and configuration files exist solely in user space across all platforms.
-* **Safe Traveling**: Clear your login token using `/clear` or menu option `[6]` before sharing the USB drive.
+* **Safe Traveling**: Sign out with `/clear` (or wipe everything with `/clear all`) before sharing the USB drive.

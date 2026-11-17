@@ -1,7 +1,7 @@
 # Publish GitHub Release Script
 param(
-    [string]$Tag = "v1.7.0",
-    [string]$Title = "AGY Portable v1.7.0",
+    [string]$Tag = "v2.0.0",
+    [string]$Title = "AGY Portable v2.0.0",
     [string]$KeyFile = "$env:USERPROFILE\Downloads\github-keys.txt"
 )
 

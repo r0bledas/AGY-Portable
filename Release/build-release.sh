@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VERSION="${1:-v1.7.0}"
+VERSION="${1:-v2.0.0}"
 
 cd "$ROOT_DIR"
 
