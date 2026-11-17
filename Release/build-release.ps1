@@ -1,6 +1,6 @@
 # Build Release Packages for AGY-Portable (POSIX-preserving via git archive)
 param(
-    [string]$Version = "v1.6.0"
+    [string]$Version = "v1.7.0"
 )
 
 $ErrorActionPreference = "Stop"

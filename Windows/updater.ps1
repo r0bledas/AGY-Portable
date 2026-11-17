@@ -1,6 +1,6 @@
 param(
     [string]$Repo = "r0bledas/AGY-Portable",
-    [string]$CurrentVersion = "v1.6.0",
+    [string]$CurrentVersion = "v1.7.0",
     [string]$WinDir = $PSScriptRoot,
     [string]$BinDir = (Join-Path $PSScriptRoot "bin"),
     [string]$TargetExe = (Join-Path $PSScriptRoot "bin\agy.exe")
