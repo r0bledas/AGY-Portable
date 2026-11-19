@@ -1,6 +1,7 @@
 # Isolated runtime data, tokens, and history (CRITICAL: NEVER COMMIT CREDENTIALS)
 data/
 jetski-standalone-oauth-token
+antigravity-oauth-token
 *.token
 *.db
 *.db-shm

@@ -54,7 +54,13 @@ if (-not $DataRoot) {
 $AccountsDir = Join-Path $DataRoot 'accounts'
 $ActiveFile  = Join-Path $AccountsDir '.active'
 $GeminiDir   = Join-Path $DataRoot 'home\.gemini'
-$LiveToken   = Join-Path $GeminiDir 'jetski-standalone-oauth-token'
+$CliDir      = Join-Path $GeminiDir 'antigravity-cli'
+$LiveToken   = Join-Path $CliDir 'antigravity-oauth-token'
+$LegacyToken = Join-Path $GeminiDir 'jetski-standalone-oauth-token'
+if (-not (Test-Path -LiteralPath $LiveToken) -and (Test-Path -LiteralPath $LegacyToken)) {
+    New-Item -ItemType Directory -Force -Path $CliDir | Out-Null
+    Copy-Item -LiteralPath $LegacyToken -Destination $LiveToken -Force
+}
 
 # ---------------------------------------------------------------- native credential access
 if (-not ('AGY.NativeCred' -as [type])) {

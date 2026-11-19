@@ -27,12 +27,20 @@ fi
 
 PORTABLE_HOME="$DATA_ROOT/home"
 PORTABLE_GEMINI="$PORTABLE_HOME/.gemini"
-PORTABLE_TOKEN="$PORTABLE_GEMINI/jetski-standalone-oauth-token"
-HOST_TOKEN="$REAL_HOME/.gemini/jetski-standalone-oauth-token"
+PORTABLE_CLI_DIR="$PORTABLE_GEMINI/antigravity-cli"
+PORTABLE_TOKEN="$PORTABLE_CLI_DIR/antigravity-oauth-token"
+PORTABLE_LEGACY_TOKEN="$PORTABLE_GEMINI/jetski-standalone-oauth-token"
+if [ ! -f "$PORTABLE_TOKEN" ] && [ -f "$PORTABLE_LEGACY_TOKEN" ]; then
+    mkdir -p "$PORTABLE_CLI_DIR"
+    cp -f "$PORTABLE_LEGACY_TOKEN" "$PORTABLE_TOKEN"
+    chmod 600 "$PORTABLE_TOKEN" 2>/dev/null || true
+fi
+HOST_TOKEN="$REAL_HOME/.gemini/antigravity-cli/antigravity-oauth-token"
+[ -f "$HOST_TOKEN" ] || HOST_TOKEN="$REAL_HOME/.gemini/jetski-standalone-oauth-token"
 BIN_DIR="$SCRIPT_DIR/bin"
 AGY_BIN="$BIN_DIR/agy"
 
-mkdir -p "$PORTABLE_GEMINI" "$DATA_ROOT/cache" "$DATA_ROOT/config" "$BIN_DIR"
+mkdir -p "$PORTABLE_CLI_DIR" "$DATA_ROOT/cache" "$DATA_ROOT/config" "$BIN_DIR"
 
 export_env() {
     export HOME="$PORTABLE_HOME"

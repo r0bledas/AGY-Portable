@@ -23,8 +23,14 @@ if exist "%WIN_DIR%\..\data" (
 
 set "PORTABLE_HOME=%DATA_ROOT%\home"
 set "PORTABLE_GEMINI=%PORTABLE_HOME%\.gemini"
-set "PORTABLE_TOKEN=%PORTABLE_GEMINI%\jetski-standalone-oauth-token"
-set "HOST_TOKEN=%USERPROFILE%\.gemini\jetski-standalone-oauth-token"
+set "PORTABLE_CLI_DIR=%PORTABLE_GEMINI%\antigravity-cli"
+set "PORTABLE_TOKEN=%PORTABLE_CLI_DIR%\antigravity-oauth-token"
+if not exist "%PORTABLE_TOKEN%" if exist "%PORTABLE_GEMINI%\jetski-standalone-oauth-token" (
+    if not exist "%PORTABLE_CLI_DIR%" mkdir "%PORTABLE_CLI_DIR%" >nul 2>&1
+    copy /Y "%PORTABLE_GEMINI%\jetski-standalone-oauth-token" "%PORTABLE_TOKEN%" >nul 2>&1
+)
+set "HOST_TOKEN=%USERPROFILE%\.gemini\antigravity-cli\antigravity-oauth-token"
+if not exist "%HOST_TOKEN%" set "HOST_TOKEN=%USERPROFILE%\.gemini\jetski-standalone-oauth-token"
 set "BIN_DIR=%WIN_DIR%\bin"
 set "AGY_BIN=%BIN_DIR%\agy.exe"
 set "ACCOUNTS_DIR=%DATA_ROOT%\accounts"
